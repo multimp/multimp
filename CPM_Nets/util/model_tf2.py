@@ -230,7 +230,6 @@ class LatentSpace(tf.keras.Model):
             return h, h
 
     def call(self, decoders):
-
         layers = dict()
         for i_key in decoders.keys():
             layer = tf.matmul(self.h_temp, decoders[i_key]['w0']) + decoders[i_key]['b0']

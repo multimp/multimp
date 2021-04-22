@@ -20,12 +20,12 @@ if __name__ == "__main__":
                         help='number of epochs to test [default: 100]')
     parser.add_argument('--lamb', type=float, default=1.,
                         help='trade off parameter [default: 1]')
-    parser.add_argument('--missing-rate', type=float, default=0,
+    parser.add_argument('--missing-rate', type=float, default=0.2,
                         help='view missing rate [default: 0]')
     args = parser.parse_args()
 
     # read data
-    trainData, testData, view_num = read_data('./data/ORL_mtv.mat', 0.8, 1)
+    trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/ORL_mtv.mat', 0.8, 1)
     outdim_size = [trainData.data[str(i)].shape[1] for i in range(view_num)]
     # set layer size
     layer_size = [[300, outdim_size[i]] for i in range(view_num)]

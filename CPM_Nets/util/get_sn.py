@@ -3,13 +3,23 @@ from numpy.random import randint
 from sklearn.preprocessing import OneHotEncoder
 
 
-def get_sn(view_num, alldata_len, missing_rate):
+def get_sn(Data, view_num, alldata_len, missing_rate):
     """Randomly generate incomplete data information, simulate partial view data with complete view data
     :param view_num:view number
     :param alldata_len:number of samples
     :param missing_rate:Defined in section 3.2 of the paper
     :return:Sn
     """
+    ratio = 1 - missing_rate
+    MX = Data.MX
+    current_MX = dict()
+    for i_view in MX.keys():
+        number_of_observed = MX[i_view].sum()
+        matrix_iter = (randint(0, 100, size=number_of_observed) < int(ratio*100)).astype(np.int)
+        current_MX[i_view] = MX[i_view]
+        current_MX[i_view][MX[i_view]] = matrix_iter
+
+    '''
     one_rate = 1-missing_rate
     if one_rate <= (1 / view_num):
         enc = OneHotEncoder()
@@ -32,7 +42,8 @@ def get_sn(view_num, alldata_len, missing_rate):
         matrix = ((matrix_iter + view_preserve) > 0).astype(np.int)
         ratio = np.sum(matrix) / (view_num * alldata_len)
         error = abs(one_rate - ratio)
-    return matrix
+    '''
+    return current_MX
 
 
 def save_Sn(Sn, str_name):

@@ -5,6 +5,7 @@ from numpy.random import shuffle
 from util.util import xavier_init
 tf.compat.v1.disable_eager_execution()
 
+
 class CPMNets():
     """build model
     """
@@ -36,8 +37,8 @@ class CPMNets():
         for v_num in range(self.view_num):
             self.input[str(v_num)] = tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
                                                     name='input' + str(v_num))
-            self.sn[str(v_num)] = tf.compat.v1.placeholder(tf.float32, shape=[None, 1], name='sn' + str(v_num))
-        # ground truth
+            self.sn[str(v_num)] = tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]], name='sn' + str(v_num))
+        # ground truthlo
         self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None], name='gt')
         # bulid the model
         self.train_op, self.loss = self.bulid_model([self.h_train_update, self.h_test_update], learning_rate)
@@ -63,6 +64,8 @@ class CPMNets():
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
             .minimize(all_loss, var_list=h_update[0])
+        #train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
+        #    .minimize(reco_loss, var_list=h_update[0])
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
             .minimize(reco_loss, var_list=h_update[1])
@@ -81,6 +84,7 @@ class CPMNets():
         weight = self.initialize_weight(self.layer_size[v])
         layer = tf.matmul(h, weight['w0']) + weight['b0']
         for num in range(1, len(self.layer_size[v])):
+            layer = tf.nn.relu(layer)
             layer = tf.nn.dropout(tf.matmul(layer, weight['w' + str(num)]) + weight['b' + str(num)], 0.9)
         return layer
 
@@ -102,8 +106,8 @@ class CPMNets():
         loss = 0
         for num in range(self.view_num):
             loss = loss + tf.reduce_sum(
-                tf.pow(tf.subtract(net[str(num)], self.input[str(num)])
-                       , 2.0) * self.sn[str(num)]
+                tf.boolean_mask(tf.pow(tf.subtract(net[str(num)], self.input[str(num)])
+                       , 2.0 ), self.sn[str(num)])
             )
         return loss
 
@@ -129,9 +133,10 @@ class CPMNets():
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
         gt = gt[index]
-        sn = sn[index]
+        for i in sn.keys():
+            sn[i] = sn[i][index]
         feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
-        feed_dict.update({self.sn[str(i)]: sn[:, i].reshape(self.trainLen, 1) for i in range(self.view_num)})
+        feed_dict.update({self.sn[str(i)]: sn[str(i)] for i in range(self.view_num)})
         feed_dict.update({self.gt: gt})
         feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
         for iter in range(epoch):
@@ -149,7 +154,7 @@ class CPMNets():
 
     def test(self, data, sn, gt, epoch):
         feed_dict = {self.input[str(v_num)]: data[str(v_num)] for v_num in range(self.view_num)}
-        feed_dict.update({self.sn[str(i)]: sn[:, i].reshape(self.testLen, 1) for i in range(self.view_num)})
+        feed_dict.update({self.sn[str(i)]: sn[str(i)] for i in range(self.view_num)})
         feed_dict.update({self.gt: gt})
         feed_dict.update({self.h_index:
                               np.array([x for x in range(self.testLen)]).reshape(self.testLen, 1) + self.trainLen})
