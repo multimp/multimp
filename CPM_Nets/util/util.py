@@ -8,11 +8,18 @@ from sklearn.model_selection import train_test_split
 
 class DataSet(object):
 
-    def __init__(self, data, view_number, labels, idx):
+    def __init__(self, data, view_number, labels, cat_indicator=None):
         """
         Construct a DataSet.
         """
-        self.idx = idx
+        if cat_indicator is None:
+            self.cat_indicator = dict()
+            for iv in range(int(view_number)):
+                self.cat_indicator[str(iv)] = np.zeros(data[iv].shape[1]).astype('int')
+        else:
+            self.cat_indicator = cat_indicator
+
+        self.cat_indicator = cat_indicator
         self.data = dict()
         self.MX = dict()
         self._num_examples = data[0].shape[0]
@@ -23,12 +30,12 @@ class DataSet(object):
         for v_num in range(view_number):
             self.MX[str(v_num)] = np.logical_not(np.isnan(data[v_num]))
             for ith_col in range(self.data[str(v_num)].shape[1]):
-                imputed = np.isreal(self.data[str(v_num)][:, ith_col]).mean()
-                self.data[str(v_num)][:, ith_col] = np.nan_to_num(data[v_num][:, ith_col], nan=imputed)
+                imputed = self.data[str(v_num)][:, ith_col][np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
+                if np.isnan(imputed):
+                    print('1')
+                self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col], nan=imputed.astype('float32'))
         for v_num in self.data.keys():
-            self.data[v_num] = Normalize(self.data[v_num])
-
-
+            self.data[str(v_num)] = Normalize(self.data[str(v_num)])
 
     @property
     def labels(self):
@@ -43,10 +50,10 @@ def Normalize(data):
     :param data:Input data
     :return:normalized data
     """
-    m = np.mean(data)
-    mx = np.max(data)
-    mn = np.min(data)
-    return (data - m) / (mx - mn)
+
+    m = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    return (data - m) / (std + 1e-3)
 
 
 def read_data(str_name, ratio, Normal=1):
@@ -106,12 +113,13 @@ def read_data(str_name, ratio, Normal=1):
             data = pickle.load(handle)
         view_number = len(data['X'])
         X = dict()
-
+        cat_indicator = dict()
         for i in range(view_number):
             X[i] = []
             for ith_sub in range(data['X'].shape[1]):
                 X[i].append(np.array(data['X'][i][ith_sub], dtype=float))
             X[i] = np.array(X[i])
+            cat_indicator[str(i)] = np.array(data['CatogoricalIndicator'][i]).astype(dtype='int')
         # train test spilt
         X_train = []
         X_test = []
@@ -138,8 +146,8 @@ def read_data(str_name, ratio, Normal=1):
                 X_test[v_num] = Normalize(X_test[v_num])
         '''
 
-        traindata = DataSet(X_train, view_number, np.array(labels_train), train_idx)
-        testdata = DataSet(X_test, view_number, np.array(labels_test), test_idx)
+        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator)
+        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator)
         return traindata, testdata, view_number
 
 

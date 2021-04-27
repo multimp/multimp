@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import scipy.io as sio
 import re
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import pickle
 
 
@@ -38,7 +38,6 @@ for ith_patient in df_gene_expression.index:
 df_gene = pd.DataFrame.from_dict(dict_person_genes, orient='index')
 # 3. pair different views
 
-
 dict_clinical_data = dict()
 dict_person_DXbl = dict()
 dict_person_DX = dict()
@@ -61,7 +60,9 @@ for i_subj_gene in list_name_gene:
 
 df_person_clinical = pd.DataFrame.from_dict(dict_clinical_data, orient='index', columns=df_tabular_data.keys())
 
+
 # 4. delete features
+## 4.1 delete list of useless features
 delete_list = ['RID',
                'PTID',
                'VISCODE',
@@ -72,8 +73,7 @@ delete_list = ['RID',
                'DX_bl',
                'DX',
                'update_stamp',
-               'EXAMDATE_bl',
-               'APOE4',]
+               'EXAMDATE_bl',]
 for ith_feature in df_person_clinical.columns:
     if ith_feature + '_bl' in df_person_clinical.columns:
         delete_list.append(ith_feature + '_bl')
@@ -81,6 +81,32 @@ delete_list = np.unique(np.array(delete_list))
 
 for i_del in delete_list:
     df_person_clinical.drop(i_del, axis=1, inplace=True)
+
+## 4.2 transform categorical features
+list_of_categorical_features = \
+['PTGENDER',
+ 'PTETHCAT',
+ 'PTRACCAT',
+ 'PTMARRY',
+ 'APOE4']
+
+list_of_binary_cat_feat = []
+for i_cat_feat in list_of_categorical_features:
+    current_cat = df_person_clinical[i_cat_feat].values
+    encoder_onehot = OneHotEncoder()
+    encoder_label = LabelEncoder()
+    encoded_labels = encoder_label.fit_transform(current_cat)[:, None]
+    encoded_labels = encoder_onehot.fit_transform(encoded_labels).toarray()
+    for i_col in range(encoded_labels.shape[1]):
+        df_person_clinical.insert(df_person_clinical.shape[1],
+                                  i_cat_feat + '_' + str(i_col),
+                                  encoded_labels[:, i_col])
+        list_of_binary_cat_feat.append(i_cat_feat + '_' + str(i_col))
+# delete cat original_features
+for i_cat_feat in list_of_categorical_features:
+    df_person_clinical.drop(i_cat_feat, axis=1, inplace=True)
+
+## 4.3 delete features
 for i_col in df_person_clinical.columns:
     NOT_ENOUGH_DATA = pd.isnull(df_person_clinical[i_col]).values.sum() > (len(df_person_clinical)//2)
     if df_person_clinical.dtypes[i_col] == 'object':
@@ -92,6 +118,18 @@ for i_col in df_person_clinical.columns:
     if NOT_ENOUGH_DATA:
         print('Delete columns: ' + str(i_col), ' lack ' + str(pd.isnull(df_person_clinical[i_col]).values.sum()) + ' values.')
         df_person_clinical.drop(i_col, axis=1, inplace=True)
+
+
+# 5. categorical indicator
+categorical_indicator_clinical = []
+for i_varaible in df_person_clinical.columns:
+    if i_varaible in list_of_binary_cat_feat:
+        categorical_indicator_clinical.append(1)
+    else:
+        categorical_indicator_clinical.append(0)
+
+
+
 # 5. save and concate
 clinical_path = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/arranged/clinical.csv'
 gene_path = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/arranged/gene.csv'
@@ -100,7 +138,14 @@ df_person_clinical.to_csv(clinical_path)
 df_gene.to_csv(gene_path)
 views = dict()
 views['X'] = dict()
-views['X'] = np.array([tuple(np.array(df_person_clinical.values)), tuple(np.array(df_gene.values))], dtype="object")
+views['X'] = \
+    np.array([tuple(np.array(df_person_clinical.values)),
+              tuple(np.array(df_gene.values))], dtype="object")
+categorical_indicator_gene = np.zeros(np.array(df_gene.values).shape[1])
+views['CatogoricalIndicator'] = \
+    np.array([tuple(np.array(categorical_indicator_clinical)),
+              tuple(np.array(categorical_indicator_gene))], dtype="object")
+
 labels = pd.DataFrame.from_dict(dict_person_DXbl, orient='index').values.squeeze().astype('str')
 encoder = LabelEncoder()
 encoded_labels = encoder.fit_transform(labels)

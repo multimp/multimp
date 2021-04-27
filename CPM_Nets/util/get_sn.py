@@ -10,6 +10,8 @@ def get_sn(Data, view_num, alldata_len, missing_rate):
     :param missing_rate:Defined in section 3.2 of the paper
     :return:Sn
     """
+
+    # generating some missing values other than current missing
     ratio = 1 - missing_rate
     MX = Data.MX
     current_MX = dict()
