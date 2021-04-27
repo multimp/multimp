@@ -29,11 +29,11 @@ class DataSet(object):
 
         for v_num in range(view_number):
             self.MX[str(v_num)] = np.logical_not(np.isnan(data[v_num]))
-            for ith_col in range(self.data[str(v_num)].shape[1]):
-                imputed = self.data[str(v_num)][:, ith_col][np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
-                if np.isnan(imputed):
-                    print('1')
-                self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col], nan=imputed.astype('float32'))
+            #for ith_col in range(self.data[str(v_num)].shape[1]):
+            #    imputed = self.data[str(v_num)][:, ith_col][np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
+            #    if np.isnan(imputed):
+            #        print('1')
+            self.data[str(v_num)] = np.nan_to_num(self.data[str(v_num)], nan=0)
         for v_num in self.data.keys():
             self.data[str(v_num)] = Normalize(self.data[str(v_num)])
 
@@ -53,10 +53,12 @@ def Normalize(data):
 
     m = np.mean(data, axis=0)
     std = np.std(data, axis=0)
+    #m = np.mean(data)
+    #std = np.std(data)
     return (data - m) / (std + 1e-3)
 
 
-def read_data(str_name, ratio, Normal=1):
+def read_data(str_name, ratio=None, Normal=1):
     """read data and spilt it train set and test set evenly
     :param str_name:path and dataname
     :param ratio:training set ratio
@@ -123,32 +125,58 @@ def read_data(str_name, ratio, Normal=1):
         # train test spilt
         X_train = []
         X_test = []
+        X_all = []
         if min(data['gt']) == 0:
             labels = data['gt'] + 1
         else:
             labels = data['gt']
         labels = labels.squeeze()
-        train_idx, test_idx, labels_train,  labels_test = \
-            train_test_split(np.arange(len(labels)),
-                             labels,
-                             train_size=ratio,
-                             random_state=0,
-                             stratify=labels)
 
-        for v_num in range(view_number):
-            X_train.append(X[v_num][train_idx])
-            X_test.append(X[v_num][test_idx])
+        if ratio is None:
+            train_idx, test_idx, labels_train,  labels_test = \
+                train_test_split(np.arange(len(labels)),
+                                 labels,
+                                 train_size=ratio,
+                                 random_state=0,
+                                 stratify=labels)
 
-        '''
-        if (Normal == 1):
             for v_num in range(view_number):
-                X_train[v_num] = Normalize(X_train[v_num])
-                X_test[v_num] = Normalize(X_test[v_num])
-        '''
+                X_train.append(X[v_num][train_idx])
+                X_test.append(X[v_num][test_idx])
+                X_all.append(X[v_num])
 
-        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator)
-        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator)
-        return traindata, testdata, view_number
+            '''
+            if (Normal == 1):
+                for v_num in range(view_number):
+                    X_train[v_num] = Normalize(X_train[v_num])
+                    X_test[v_num] = Normalize(X_test[v_num])
+            '''
+            alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator)
+            traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator)
+            testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator)
+            return alldata, traindata, testdata, view_number
+        else:
+            train_idx, test_idx, labels_train,  labels_test = \
+                train_test_split(np.arange(len(labels)),
+                                 labels,
+                                 train_size=ratio,
+                                 random_state=0,
+                                 stratify=labels)
+
+            for v_num in range(view_number):
+                X_train.append(X[v_num][train_idx])
+                X_test.append(X[v_num][test_idx])
+
+            '''
+            if (Normal == 1):
+                for v_num in range(view_number):
+                    X_train[v_num] = Normalize(X_train[v_num])
+                    X_test[v_num] = Normalize(X_test[v_num])
+            '''
+
+            traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator)
+            testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator)
+            return traindata, testdata, view_number
 
 
 
