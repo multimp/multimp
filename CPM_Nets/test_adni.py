@@ -20,13 +20,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--lsd-dim', type=int, default=512,
                         help='dimensionality of the latent space data [default: 512]')
-    parser.add_argument('--epochs-train', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs-train', type=int, default=100, metavar='N',
                         help='number of epochs to train [default: 20]')
-    parser.add_argument('--epochs-test', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs-test', type=int, default=100, metavar='N',
                         help='number of epochs to test [default: 50]')
     parser.add_argument('--lamb', type=float, default=10.,
                         help='trade off parameter [default: 10]')
-    parser.add_argument('--missing-rate', type=float, default=0.,
+    parser.add_argument('--missing-rate', type=float, default=0.1,
                         help='view missing rate [default: 0]')
     parser.add_argument('--log-dir', default='/playpen-raid/data/oct_yining/multimp/results/', type=str,
                         help='saving path')
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         # get recovered matrix
 
         imputed_data = model.recover(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1))
-        mean_mse, mean_auc = evaluate(allData.data, imputed_data, Sn_all, model.cat_indicator, view_num)
+        mean_mse, mean_auc = evaluate(allData.data, imputed_data, Sn_all, allData.MX, model.cat_indicator, view_num)
         print('MSE is {:.4f}, MeanAUC is {:.4f}'.format(mean_mse, mean_auc))
 
         # save results
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
 
 
-
+    '''
     # supervised
     else:
         model = CPMNets(view_num,
@@ -147,3 +147,4 @@ if __name__ == "__main__":
     H_test = model.get_h_test()
     label_pre = classfiy.ave(H_train, H_test, trainData.labels)
     print('Accuracy on the test set is {:.4f}'.format(accuracy_score(testData.labels, label_pre)))
+    '''

@@ -7,7 +7,7 @@ from util.util import xavier_init
 from sklearn.metrics import roc_auc_score
 #tf.compat.v1.enable_eager_execution()
 import torch
-def evaluate(original, imputed, sn, cat_indicator, view_num):
+def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
     tf.executing_eagerly()
     mx_ori_nume = dict()
     mx_ori_cat = dict()
@@ -24,11 +24,11 @@ def evaluate(original, imputed, sn, cat_indicator, view_num):
     for i_view in range(int(view_num)):
         cat_indicator[str(i_view)] = cat_indicator[str(i_view)].astype('bool')
         mx_ori_nume[str(i_view)] = \
-            np.isnan(original[str(i_view)])[:, np.logical_not(cat_indicator[str(i_view)])]
+            np.logical_not(original_MX[str(i_view)])[:, np.logical_not(cat_indicator[str(i_view)])]
         mx_ori_cat[str(i_view)] = \
-            np.isnan(original[str(i_view)])[:, cat_indicator[str(i_view)]]
+            np.logical_not(original_MX[str(i_view)])[:, cat_indicator[str(i_view)]]
         mx_ori[str(i_view)] = \
-            np.isnan(original[str(i_view)])
+            np.logical_not(original_MX[str(i_view)])
         sn_for_testing_cat[str(i_view)] = \
             ((1 - sn[str(i_view)]) - mx_ori[str(i_view)])[:, cat_indicator[str(i_view)]].astype('bool')
         sn_for_testing_nume[str(i_view)] = \
