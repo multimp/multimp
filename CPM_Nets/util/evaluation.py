@@ -59,6 +59,6 @@ def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
     for i_view in range(int(view_num)):
         num_of_values += sn_for_testing_nume[str(i_view)].sum()
         total_error_nume += error_nume[str(i_view)]
-    mean_error_nume = total_error_nume / num_of_values
+    mean_error_nume = (total_error_nume / num_of_values)**0.5
     mean_auc = np.array(error_cat).mean()
     return mean_error_nume, mean_auc
