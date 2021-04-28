@@ -186,6 +186,6 @@ def xavier_init(fan_in, fan_out, constant=1):
 
 def impute_missing_values_using_imputed_matrix(originaldata, imputation, sn):
     for ith_view in sn.keys():
-        missingness = sn[ith_view]
+        missingness = np.logical_not(sn[ith_view])
         originaldata[ith_view][missingness] = imputation[ith_view][missingness]
     return originaldata
