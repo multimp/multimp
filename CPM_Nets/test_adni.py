@@ -10,7 +10,7 @@ from util.evaluation import *
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import pickle5 as pickle
-
+from util.model_ori import CPMNets_ori
 
 warnings.filterwarnings("ignore")
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
@@ -18,11 +18,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lsd-dim', type=int, default=512,
+    parser.add_argument('--model', type=str, default='CPMNets_ori',
+                        help='view missing rate [default: 0]')
+    parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
-    parser.add_argument('--epochs-train', type=int, default=100, metavar='N',
+    parser.add_argument('--epochs-train', type=int, default=1, metavar='N',
                         help='number of epochs to train [default: 20]')
-    parser.add_argument('--epochs-test', type=int, default=100, metavar='N',
+    parser.add_argument('--epochs-test', type=int, default=1, metavar='N',
                         help='number of epochs to test [default: 50]')
     parser.add_argument('--lamb', type=float, default=10.,
                         help='trade off parameter [default: 10]')
@@ -34,7 +36,7 @@ if __name__ == "__main__":
                         help='view missing rate [default: 0]')
 
     args = parser.parse_args()
-
+    print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + '.')
     # read data
     if args.unsu:
         allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1)
@@ -58,21 +60,37 @@ if __name__ == "__main__":
 
     # train
     if args.unsu:
-        # Model building
-        model = CPMNets(view_num,
-                        allData.cat_indicator,
-                        allData.num_examples,
-                        testData.num_examples,
-                        layer_size, layer_size_d,
-                        args.lsd_dim,
-                        learning_rate,
-                        args.lamb)
-        model.train(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1), epoch[0])
+        if args.model == 'CPMNets':
+            # Model building
+            model = CPMNets(view_num,
+                            allData.cat_indicator,
+                            allData.num_examples,
+                            testData.num_examples,
+                            layer_size, layer_size_d,
+                            args.lsd_dim,
+                            learning_rate,
+                            args.lamb)
+
+            model.train(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1), epoch[0])
+        elif args.model == 'CPMNets_ori':
+            model = CPMNets_ori(view_num,
+                                allData.cat_indicator,
+                            allData.num_examples,
+                            testData.num_examples,
+                            layer_size,
+                            args.lsd_dim,
+                            learning_rate,
+                            args.lamb)
+
+            model.train(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1), epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
         imputed_data = model.recover(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1))
-        mean_mse, mean_auc = evaluate(allData.data, imputed_data, Sn_all, allData.MX, model.cat_indicator, view_num)
+
+        # evaluete method
+        mean_mse, mean_auc, added_missingness = \
+            evaluate(allData.data, imputed_data, Sn_all, allData.MX, model.cat_indicator, view_num)
         print('MSE is {:.4f}, MeanAUC is {:.4f}'.format(mean_mse, mean_auc))
 
         # save results
@@ -80,37 +98,51 @@ if __name__ == "__main__":
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
-        mat_path = os.path.join(root_dir, 'imputed')
+        mat_path = os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate))
+        if not os.path.exists(os.path.join(root_dir, 'imputed')):
+            os.mkdir(os.path.join(root_dir, 'imputed'))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model)):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate))):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate)))
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
-        if not os.path.exists(mat_path):
-            os.mkdir(mat_path)
-        mat_path = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
-        metrics_path =  metrics_path +  '/results.csv'
+        mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
+        metrics_file = metrics_path +  '/results.csv'
 
         ## caculate results
         current_metrics = {}
-        current_metrics['missing_rate'] = args.missing_rate
-        current_metrics['mse'] = mean_mse
-        current_metrics['auc'] = mean_auc
-        current_metrics['epoch'] = mean_auc
+        current_metrics['missing_rate'] = [args.missing_rate]
+        current_metrics['mse'] = [mean_mse]
+        current_metrics['auc'] = [mean_auc]
+        current_metrics['epoch'] = [int(args.epochs_train)]
+        current_metrics['model'] = [args.model]
         ## save to pickle
-        with open(mat_path, 'wb') as handle:
+        with open(mat_file, 'wb') as handle:
             pickle.dump(imputed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        ## save to csv
-        if os.path.exists(metrics_path):
-            metrics = pd.read_csv(metrics_path, header=0)
-            metrics.append(pd.DataFrame(current_metrics, columns=['missing_rate', 'auc', 'mse'], index=[len(metrics)]))
-        else:
-            pd.DataFrame(current_metrics, index=[0], columns=['missing_rate', 'auc', 'mse', 'epochs']).to_csv(metrics_path)
+        for ith_view in range(int(view_num)):
+            mat_path_v = mat_path + '/imputed_adni_missing_rate_' + str(args.missing_rate) + '_view_' + str(ith_view) + '.csv'
+            pd.DataFrame(imputed_data[str(ith_view)]).to_csv(mat_path_v, index=None, columns=None, header=None)
+            mask_path_v = mat_path + '/mask_adni_missing_rate_' + str(args.missing_rate) + '_view_' + str(ith_view) + '.csv'
+            pd.DataFrame(added_missingness[str(ith_view)]).to_csv(mask_path_v, index=None, columns=None, header=None)
 
+        ## save to csv
+        if os.path.exists(metrics_file):
+            metrics = pd.read_csv(metrics_file, header=0)
+            new_metrics = metrics.append(pd.DataFrame(current_metrics,  columns=['missing_rate', 'auc', 'mse', 'epoch', 'model'], index=[0]))
+            new_metrics.to_csv(metrics_file, index=None)
+        else:
+            pd.DataFrame.from_dict(current_metrics).to_csv(metrics_file, index=None)
+        '''
         # test
         if args.unsu:
             model.test(testData.data, Sn_test, testData.labels.reshape(testData.num_examples, 1), epoch[1])
+        
         H_test = model.get_h_test()
-        #label_pre = classfiy.ave(H_train, H_test, trainData.labels)
-        #print('Accuracy on the test set is {:.4f}'.format(accuracy_score(testData.labels, label_pre)))
+        label_pre = classfiy.ave(H_train, H_test, trainData.labels)
+        print('Accuracy on the test set is {:.4f}'.format(accuracy_score(testData.labels, label_pre)))
+        '''
 
 
 
@@ -135,7 +167,7 @@ if __name__ == "__main__":
     imputed_data = dict()
     for v_num in range(model.view_num):
         imputed_data[str(v_num)] = model.Encoding_net(H_train, v_num)
-    mean_mse, mean_auc = evaluate(trainData.data, imputed_data, Sn_train, model.cat_indicator, view_num)
+    mean_mse, mean_auc = evaluate(trainData.data, imputed_data, Sn_train, trainData.MX, model.cat_indicator, view_num)
     print('MSE is {:.4f}, MeanAUC is {:.4f}'.format(accuracy_score(mean_mse, mean_auc)))
 
     # save results

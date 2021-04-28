@@ -196,7 +196,7 @@ class CPMNets():
             #loss_from_numeric_vs = tf.reduce_sum(
                 #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                 #                                    2.0), ca_mask), self.sn[str(num)]), )
-            loss_from_numeric_vs = tf.reduce_sum(
+            loss_from_numeric_vs = tf.reduce_mean(
             tf.boolean_mask(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                                                2.0), self.sn[str(num)]),)
             loss_regr += loss_from_numeric_vs
@@ -239,7 +239,7 @@ class CPMNets():
             weights=1.0,
             scope=None,
             loss_collection=tf.compat.v1.GraphKeys.LOSSES,
-            reduction=tf.compat.v1.losses.Reduction.SUM,
+            reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
             add_summaries=False):
         loss = 0
         with tf.compat.v1.name_scope(scope, 'discriminator_loss',) as scope:
@@ -268,7 +268,7 @@ class CPMNets():
             weights=1.0,
             scope=None,
             loss_collection=tf.compat.v1.GraphKeys.LOSSES,
-            reduction=tf.compat.v1.losses.Reduction.SUM,
+            reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
             add_summaries=False):
         loss = 0
         with tf.compat.v1.name_scope(scope, 'generator_loss') as scope:

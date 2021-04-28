@@ -29,11 +29,11 @@ class DataSet(object):
 
         for v_num in range(view_number):
             self.MX[str(v_num)] = np.logical_not(np.isnan(data[v_num]))
-            #for ith_col in range(self.data[str(v_num)].shape[1]):
-            #    imputed = self.data[str(v_num)][:, ith_col][np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
-            #    if np.isnan(imputed):
-            #        print('1')
-            self.data[str(v_num)] = np.nan_to_num(self.data[str(v_num)], nan=0)
+            if np.isnan(self.data[str(v_num)]).sum() > 0:
+                for ith_col in range(self.data[str(v_num)].shape[1]):
+                    imputed = self.data[str(v_num)][:, ith_col][np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
+                    self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col], nan=imputed)
+            #self.data[str(v_num)] = np.nan_to_num(self.data[str(v_num)], nan=0)
         for v_num in self.data.keys():
             self.data[str(v_num)] = Normalize(self.data[str(v_num)])
 
