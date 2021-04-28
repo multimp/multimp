@@ -146,7 +146,7 @@ class CPMNets():
         # concate and suffle data
         x_real = x_real * self.sn[str(v)] + x_generated * (1 - self.sn[str(v)])
         x_feat = tf.concat((x_real, x_generated), axis=0)
-        y = tf.concat((tf.ones_like(self.gt), tf.zeros_like(self.gt)), axis=0)
+        y = tf.concat((tf.zeros_like(self.gt), tf.ones_like(self.gt)), axis=0)
         y = tf.one_hot(y, 2)
         #sess = tf.compat.v1.InteractiveSession()
         #x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
@@ -247,7 +247,7 @@ class CPMNets():
             # (discriminator_outputs, discriminator_labels, weights, label_smoothing)
             # -log((1 - label_smoothing) - sigmoid(D(x)))
             for ith_view in range(int(self.view_num)):
-                loss += tf.compat.v1.losses.sigmoid_cross_entropy(
+                loss += tf.compat.v1.losses.softmax_cross_entropy(
                     discriminator_labels[str(ith_view)],
                     discriminator_outputs[str(ith_view)],
                     weights,

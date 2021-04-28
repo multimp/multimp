@@ -31,7 +31,7 @@ def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
         mx_ori[str(i_view)] = \
             np.logical_not(original_MX[str(i_view)])
         sn_for_testing[str(i_view)] = \
-            ((1 - sn[str(i_view)]) - mx_ori[str(i_view)]).astype('bool')
+            np.logical_xor(np.logical_not(sn[str(i_view)]), mx_ori[str(i_view)]).astype('bool')
 
         sn_for_testing_cat[str(i_view)] = \
             ((1 - sn[str(i_view)]) - mx_ori[str(i_view)])[:, cat_indicator[str(i_view)]].astype('bool')

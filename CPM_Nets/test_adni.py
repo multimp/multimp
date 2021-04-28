@@ -86,7 +86,7 @@ if __name__ == "__main__":
                             learning_rate,
                             args.lamb)
 
-            model.train(allData.data, Sn_all, allData.labels, epoch[0])
+            model.train(allData.data, Sn_all.copy(), allData.labels, epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
