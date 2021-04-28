@@ -68,17 +68,37 @@ sum(is.na(mutation))
 ## complete case for all views
 index <- complete.cases(t(clinical_GBM))
 clinical_GBM2 <- t(clinical_GBM[,index])
+library(caret)
+dummy <- dummyVars(" ~ + gender + radiation_therapy +race + ethnicity", data=clinical_GBM2)
+newdata <- data.frame(predict(dummy, newdata = clinical_GBM2))
+clinical_GBM3 <- data.frame(year_to_birth=clinical_GBM2[,"years_to_birth"],newdata)
+clinical_GBM3[,1] <- as.numeric(clinical_GBM3[,1])
+clinical_GBM2[,2] <- as.numeric(factor(clinical_GBM2[,2]))
+
 mutation_GBM2 <- t(mutation_GBM[complete.cases(mutation_GBM),index])
 rna_GBM2 <- t(rna_GBM[complete.cases(rna_GBM),index])
 CNV_GBM2 <- t(CNV_GBM[complete.cases(CNV_GBM),index])
-CNV_focal_GBM2 <- t(CNV_focal_GBM[complete.cases(CNV_GBM),index])
-methylation_GBM2 <- t(methylation_GBM[complete.cases(CNV_GBM),index])
-miRNA_GBM <- miRNA[,sample]
+CNV_focal_GBM2 <- t(CNV_focal_GBM[complete.cases(CNV_focal_GBM),index])
+methylation_GBM2 <- t(methylation_GBM[complete.cases(methylation_GBM),index])
+miRNA_GBM2 <- t(miRNA_GBM[complete.cases(miRNA_GBM),index])
 
+## coding category variables
+label <- as.numeric(clinical_GBM2[,2])
+time <- as.numeric(clinical_GBM2[,7])
+status <- as.numeric(clinical_GBM2[,8])
+cate_clinical <- c(0,rep(1,9))
+cate_mutation <- rep(0,ncol(mutation_GBM2))
+cate_rna <- rep(0,ncol(rna_GBM2))
+cate_CNV <- rep(0,ncol(CNV_GBM2))
+cate_CNV_focal <- rep(0,ncol(CNV_focal_GBM2))
+cate_methylation <- rep(0,ncol(methylation_GBM2))
+cate_miRNA <- rep(0,ncol(miRNA_GBM2))
 ## create 5-fold cross validation
-library(caret)
-clinical_GBM["status",] <-ifelse(is.na(clinical_GBM["status",]),3,clinical_GBM["status",])
-flds <- createFolds(clinical_GBM["status",], k = 5, list = TRUE, returnTrain =FALSE)
+# library(caret)
+# clinical_GBM["status",] <-ifelse(is.na(clinical_GBM["status",]),3,clinical_GBM["status",])
+# flds <- createFolds(clinical_GBM["status",], k = 5, list = TRUE, returnTrain =FALSE)
 
-save(clinical_GBM,mutation_GBM,rna_GBM,CNV_GBM,CNV_focal_GBM,methylation_GBM,miRNA_GBM,flds,file = "./data/TCGA-GBM.rda")
-# load("./data/TCGA-GBM.rda")
+save(clinical_GBM3,mutation_GBM2,rna_GBM2,CNV_GBM2,CNV_focal_GBM2,
+     methylation_GBM2,miRNA_GBM2,label,status,time,cate_clinical,cate_mutation,cate_rna,cate_CNV,cate_CNV_focal,
+     cate_methylation,cate_miRNA,file = "C:/Users/wancenmu/Downloads/GBMLGG/TCGA-GBM_cate.rdata")
+# load("C:/Users/wancenmu/Downloads/GBMLGG/TCGA-GBM_cate.rdata")

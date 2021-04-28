@@ -29,7 +29,8 @@ cate_miRNA = result['cate_miRNA']
 
 # label
 label = result['label']
-sample_name = result['sample']
+status = result['status']
+time = result['time']
 
 views = dict()
 views['X'] = dict()
@@ -43,13 +44,13 @@ views['X'] = \
               tuple(np.array(miRNA))], dtype="object")
 
 views['CatogoricalIndicator'] = \
-    np.array([tuple(np.array(cate_clinical)),
-              tuple(np.array(cate_mutation)),
-              tuple(np.array(cate_rna)),
-              tuple(np.array(cate_CNV)),
-              tuple(np.array(cate_CNV_focal)),
-              tuple(np.array(cate_methylation)),
-              tuple(np.array(cate_miRNA))], dtype="object")
+    np.array([tuple(np.array(cate_clinical).reshape(-1)),
+              tuple(np.array(cate_mutation).reshape(-1)),
+              tuple(np.array(cate_rna).reshape(-1)),
+              tuple(np.array(cate_CNV).reshape(-1)),
+              tuple(np.array(cate_CNV_focal).reshape(-1)),
+              tuple(np.array(cate_methylation).reshape(-1)),
+              tuple(np.array(cate_miRNA).reshape(-1))], dtype="object")
 
 views['gt'] = np.array(label).astype(int)
 
