@@ -1,7 +1,8 @@
 import numpy as np
-from util.util import read_data
+from util.util import read_data, impute_missing_values_using_imputed_matrix
 from util.get_sn import get_sn
 from util.model import CPMNets
+
 import util.classfiy as classfiy
 from sklearn.metrics import accuracy_score
 import os
@@ -34,17 +35,20 @@ if __name__ == "__main__":
                         help='saving path')
     parser.add_argument('--unsu', type=bool, default=True,
                         help='view missing rate [default: 0]')
+    parser.add_argument('--multi-view', type=bool, default=True,
+                        help='whether to use multiview learning')
+
 
     args = parser.parse_args()
     print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + '.')
     # read data
     if args.unsu:
-        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1)
+        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1, multi_view=args.multi_view)
         # Randomly generated missing matrix
         Sn_all = get_sn(allData, view_num, trainData.num_examples, args.missing_rate)
     else:
         trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl',
-                                                  ratio=0.8, Normal=1)
+                                                  ratio=0.8, Normal=1, multi_view=args.multi_view)
 
     # Randomly generated missing matrix
     Sn_train = get_sn(trainData, view_num, trainData.num_examples, args.missing_rate)
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     layer_size_d = [[outdim_size[i], 128, 1] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]
-    learning_rate = [0.001, 0.01]
+    learning_rate = [0.01, 0.01]
 
 
     # train
@@ -98,13 +102,13 @@ if __name__ == "__main__":
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
-        mat_path = os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate))
+        mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model)):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate))):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model, str(args.missing_rate)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view))):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate)))
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
         mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
@@ -117,7 +121,10 @@ if __name__ == "__main__":
         current_metrics['auc'] = [mean_auc]
         current_metrics['epoch'] = [int(args.epochs_train)]
         current_metrics['model'] = [args.model]
-        ## save to pickle
+        current_metrics['multi_view'] = [args.multi_view]
+
+        ## save to imputations
+        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.MX)
         with open(mat_file, 'wb') as handle:
             pickle.dump(imputed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -130,7 +137,8 @@ if __name__ == "__main__":
         ## save to csv
         if os.path.exists(metrics_file):
             metrics = pd.read_csv(metrics_file, header=0)
-            new_metrics = metrics.append(pd.DataFrame(current_metrics,  columns=['missing_rate', 'auc', 'mse', 'epoch', 'model'], index=[0]))
+            new_metrics = metrics.append(pd.DataFrame(current_metrics,
+                                                      columns=['missing_rate', 'auc', 'mse', 'epoch', 'model', 'multi_view'], index=[0]))
             new_metrics.to_csv(metrics_file, index=None)
         else:
             pd.DataFrame.from_dict(current_metrics).to_csv(metrics_file, index=None)

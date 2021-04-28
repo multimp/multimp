@@ -76,7 +76,7 @@ class CPMNets():
         reco_loss_regre, reco_loss_cls = self.reconstruction_loss(net)
 
         # gan discriminator loss
-        discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels)
+        discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0.25)
         # gan generator loss
         generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
 
@@ -92,7 +92,7 @@ class CPMNets():
 
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
-            .minimize(all_loss, var_list=h_update[0])
+            .minimize(recons_loss, var_list=h_update[0])
 
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
@@ -275,7 +275,7 @@ class CPMNets():
             loss -= self.discriminator_loss(
                 discriminator_outputs,
                 discriminator_labels,
-                weights=weights,  scope=scope,
+                weights=weights,  scope=scope, label_smoothing=0,
                 loss_collection=loss_collection, reduction=reduction)
 
         if add_summaries:
@@ -317,7 +317,7 @@ class CPMNets():
                     [self.train_op[3], self.loss[4]], feed_dict=feed_dict)
 
             output = "Epoch : {:.0f}  ===> " \
-                     "All Loss Loss = {:.4f}, " \
+                     "All Loss = {:.4f}, " \
                      "Reconstruction Loss = {:.4f}, " \
                      "Generator Loss = {:.4f}, " \
                      "Discriminator Loss = {:.4f}" \
