@@ -53,12 +53,27 @@ mutation_GBM <- mutation_GBM[keep_mutate,]
 ## check missingness
 ### <7%
 clinical_miss<-vapply(seq_len(nrow(clinical_GBM)), function(i) sum(is.na(clinical_GBM[i,]))*100/ncol(clinical_GBM),numeric(1))
-methylation_miss<-vapply(seq_len(nrow(methylation_GBM)), function(i) sum(is.na(methylation_GBM[i,]))*100/ncol(methylation_GBM),numeric(1))
+
+methylation_miss<-vapply(seq_len(ncol(methylation_GBM)), function(i) sum(is.na(methylation_GBM[i,]))*100/n(methylation_GBM),numeric(1))
 hist(methylation_miss)
+
+methylation_miss<-vapply(seq_len(nrow(methylation_GBM)), function(i) sum(is.na(methylation_GBM[i,])),numeric(1))
+hist(methylation_miss)
+length(which(methylation_miss==0))
 ### no missing
 sum(is.na(rna))
 sum(is.na(CNV))
 sum(is.na(mutation))
+
+## complete case for all views
+index <- complete.cases(t(clinical_GBM))
+clinical_GBM2 <- t(clinical_GBM[,index])
+mutation_GBM2 <- t(mutation_GBM[complete.cases(mutation_GBM),index])
+rna_GBM2 <- t(rna_GBM[complete.cases(rna_GBM),index])
+CNV_GBM2 <- t(CNV_GBM[complete.cases(CNV_GBM),index])
+CNV_focal_GBM2 <- t(CNV_focal_GBM[complete.cases(CNV_GBM),index])
+methylation_GBM2 <- t(methylation_GBM[complete.cases(CNV_GBM),index])
+miRNA_GBM <- miRNA[,sample]
 
 ## create 5-fold cross validation
 library(caret)
