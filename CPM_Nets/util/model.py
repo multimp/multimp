@@ -66,9 +66,11 @@ class CPMNets():
         # discriminator
         discriminator_net = dict()
         discriminator_labels = dict()
+        pred_gen = {}
         for v_num in range(self.view_num):
             discriminator_net[str(v_num)], current_labels = \
                 self.Discriminator_net(self.input[str(v_num)], net[str(v_num)], v_num)
+            pred_gen[str(v_num)], gen_y = self.Discriminator_net_for_gen(net[str(v_num)], v_num)
             discriminator_labels[str(v_num)] = current_labels
 
 
@@ -78,7 +80,8 @@ class CPMNets():
         # gan discriminator loss
         discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
         # gan generator loss
-        generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
+
+        generator_loss = self.generator_loss(pred_gen, gen_y)
 
 
         recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
@@ -146,7 +149,7 @@ class CPMNets():
         # concate and suffle data
         x_real = x_real * self.sn[str(v)] + x_generated * (1 - self.sn[str(v)])
         x_feat = tf.concat((x_real, x_generated), axis=0)
-        y = tf.concat((tf.zeros_like(self.gt), tf.ones_like(self.gt)), axis=0)
+        y = tf.concat((tf.ones_like(self.gt), tf.zeros_like(self.gt)), axis=0)
         y = tf.one_hot(y, 2)
         #sess = tf.compat.v1.InteractiveSession()
         #x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
@@ -154,6 +157,18 @@ class CPMNets():
         #y = tf.cast(x_y[:, -1], tf.bool)[:, None]
         weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
         layer_d = tf.matmul(x_feat, weight_d['w0']) + weight_d['b0']
+        for num in range(1, len(self.layer_size_d[v])-1):
+            layer = tf.nn.relu(layer_d)
+            layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
+        return layer, y
+
+    def Discriminator_net_for_gen(self, x_generated, v):
+        # concate and suffle data
+        y = tf.zeros_like(self.gt)
+        y = tf.one_hot(y, 2)
+
+        weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
+        layer_d = tf.matmul(x_generated, weight_d['w0']) + weight_d['b0']
         for num in range(1, len(self.layer_size_d[v])-1):
             layer = tf.nn.relu(layer_d)
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
