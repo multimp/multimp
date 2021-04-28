@@ -47,7 +47,7 @@ class CPMNets():
                 tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]], name='sn' + str(v_num))
 
         # ground truthlo
-        self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, 1], name='gt')
+        self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, ], name='gt')
 
         # bulid the model
         self.train_op, self.loss = self.bulid_model([self.h_train_update, self.h_test_update], learning_rate)
@@ -76,7 +76,7 @@ class CPMNets():
         reco_loss_regre, reco_loss_cls = self.reconstruction_loss(net)
 
         # gan discriminator loss
-        discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0.25)
+        discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
         # gan generator loss
         generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
 
@@ -147,6 +147,7 @@ class CPMNets():
         x_real = x_real * self.sn[str(v)] + x_generated * (1 - self.sn[str(v)])
         x_feat = tf.concat((x_real, x_generated), axis=0)
         y = tf.concat((tf.ones_like(self.gt), tf.zeros_like(self.gt)), axis=0)
+        y = tf.one_hot(y, 2)
         #sess = tf.compat.v1.InteractiveSession()
         #x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
         #x_feat = x_y[:, 0:-1]

@@ -56,10 +56,10 @@ if __name__ == "__main__":
     outdim_size = [trainData.data[str(i)].shape[1] for i in range(view_num)]
     # set layer size
     layer_size = [[outdim_size[i]] for i in range(view_num)]
-    layer_size_d = [[outdim_size[i], 128, 1] for i in range(view_num)]
+    layer_size_d = [[outdim_size[i], 128, 2] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]
-    learning_rate = [0.01, 0.01]
+    learning_rate = [0.001, 0.01]
 
 
     # train
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                             learning_rate,
                             args.lamb)
 
-            model.train(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1), epoch[0])
+            model.train(allData.data, Sn_all, allData.labels, epoch[0])
         elif args.model == 'CPMNets_ori':
             model = CPMNets_ori(view_num,
                                 allData.cat_indicator,
@@ -86,11 +86,11 @@ if __name__ == "__main__":
                             learning_rate,
                             args.lamb)
 
-            model.train(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1), epoch[0])
+            model.train(allData.data, Sn_all, allData.labels, epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
-        imputed_data = model.recover(allData.data, Sn_all, allData.labels.reshape(allData.num_examples, 1))
+        imputed_data = model.recover(allData.data, Sn_all, allData.labels)
 
         # evaluete method
         mean_mse, mean_auc, added_missingness = \
