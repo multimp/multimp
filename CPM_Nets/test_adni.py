@@ -35,12 +35,12 @@ if __name__ == "__main__":
                         help='saving path')
     parser.add_argument('--unsu', type=bool, default=True,
                         help='view missing rate [default: 0]')
-    parser.add_argument('--multi-view', type=bool, default=True,
+    parser.add_argument('--multi-view', type=bool, default=False,
                         help='whether to use multiview learning')
 
 
     args = parser.parse_args()
-    print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + '.')
+    print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(args.multi_view) + '.')
     # read data
     if args.unsu:
         allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1, multi_view=args.multi_view)
@@ -103,6 +103,7 @@ if __name__ == "__main__":
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
         mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))
+        print('saving in ' + mat_path)
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
         if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view))):
