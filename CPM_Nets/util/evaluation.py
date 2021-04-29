@@ -105,14 +105,15 @@ def classification_evaluation(feature_path, gt):
         read_data(feature_path,  ratio=0.8, Normal=1, multi_view = True)
 
 
-    for i in trainData.keys():
+    for i in trainData.data.keys():
         if i == '0':
-            train_features =  trainData['0']
+            train_features =  trainData.data[i]
         else:
-            train_features = np.concatenate((train_features,))
+            train_features = np.concatenate((train_features,trainData.data[i]), axis=1)
+
+    labels = trainData.labels
 
     clf= SVC(kernel='linear')
-    clf.fit(train_features, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svc', SVC(gamma='auto'))]
-    for
+    clf.fit(train_features, trainData.labels)
+    accuracy = clf.score(testData.data, testData.labels)
+    return

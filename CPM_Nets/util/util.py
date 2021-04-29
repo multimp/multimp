@@ -148,7 +148,10 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True):
         alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator, multi_view=multi_view)
         traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view=multi_view)
         testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view=multi_view)
-        return alldata, traindata, testdata, view_number
+        if multi_view:
+            return alldata, traindata, testdata, view_number
+        else:
+            return alldata, traindata, testdata, 1
     else:
         train_idx, test_idx, labels_train,  labels_test = \
             train_test_split(np.arange(len(labels)),
