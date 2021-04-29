@@ -66,10 +66,13 @@ class CPMNets():
         # discriminator
         discriminator_net = dict()
         discriminator_labels = dict()
+        pred_gen = {}
+        gen_y = {}
         for v_num in range(self.view_num):
-            discriminator_net[str(v_num)], current_labels = \
+            discriminator_net[str(v_num)], discriminator_labels[str(v_num)] = \
                 self.Discriminator_net(self.input[str(v_num)], net[str(v_num)], v_num)
-            discriminator_labels[str(v_num)] = current_labels
+            pred_gen[str(v_num)], gen_y[str(v_num)] = \
+                self.Discriminator_net_for_gen(net[str(v_num)], v_num)
 
 
         # calculate reconstruction loss
@@ -78,7 +81,8 @@ class CPMNets():
         # gan discriminator loss
         discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
         # gan generator loss
-        generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
+
+        generator_loss = self.generator_loss(pred_gen, gen_y)
 
 
         recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
@@ -92,7 +96,7 @@ class CPMNets():
 
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
-            .minimize(recons_loss, var_list=h_update[0])
+            .minimize(recons_loss + generator_loss, var_list=h_update[0])
 
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
@@ -159,6 +163,18 @@ class CPMNets():
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
         return layer, y
 
+    def Discriminator_net_for_gen(self, x_generated, v):
+        # concate and suffle data
+        y = tf.zeros_like(self.gt)
+        y = tf.one_hot(y, 2)
+
+        weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
+        layer_d = tf.matmul(x_generated, weight_d['w0']) + weight_d['b0']
+        for num in range(1, len(self.layer_size_d[v])-1):
+            layer = tf.nn.relu(layer_d)
+            layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
+        return layer, y
+
 
     def initialize_weight(self, dims_net):
         all_weight = dict()
@@ -197,7 +213,7 @@ class CPMNets():
             #loss_from_numeric_vs = tf.reduce_sum(
                 #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                 #                                    2.0), ca_mask), self.sn[str(num)]), )
-            loss_from_numeric_vs = tf.reduce_mean(
+            loss_from_numeric_vs = tf.reduce_sum(
             tf.boolean_mask(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                                                2.0), self.sn[str(num)]),)
             loss_regr += loss_from_numeric_vs
@@ -247,7 +263,7 @@ class CPMNets():
             # (discriminator_outputs, discriminator_labels, weights, label_smoothing)
             # -log((1 - label_smoothing) - sigmoid(D(x)))
             for ith_view in range(int(self.view_num)):
-                loss += tf.compat.v1.losses.sigmoid_cross_entropy(
+                loss += tf.compat.v1.losses.softmax_cross_entropy(
                     discriminator_labels[str(ith_view)],
                     discriminator_outputs[str(ith_view)],
                     weights,
@@ -273,7 +289,8 @@ class CPMNets():
             add_summaries=False):
         loss = 0
         with tf.compat.v1.name_scope(scope, 'generator_loss') as scope:
-            loss -= self.discriminator_loss(
+            loss -= \
+                self.discriminator_loss(
                 discriminator_outputs,
                 discriminator_labels,
                 weights=weights,  scope=scope, label_smoothing=0,

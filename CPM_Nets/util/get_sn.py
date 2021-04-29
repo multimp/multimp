@@ -13,13 +13,14 @@ def get_sn(Data, view_num, alldata_len, missing_rate):
 
     # generating some missing values other than current missing
     ratio = 1 - missing_rate
-    MX = Data.MX
+    MX = Data.MX.copy()
     current_MX = dict()
     for i_view in MX.keys():
         number_of_observed = MX[i_view].sum()
         matrix_iter = (randint(0, 100, size=number_of_observed) < int(ratio*100)).astype(np.int)
-        current_MX[i_view] = MX[i_view]
-        current_MX[i_view][MX[i_view]] = matrix_iter
+        a = MX[i_view].copy()
+        a[MX[i_view]] = matrix_iter
+        current_MX[i_view] = a #[MX[i_view]] = matrix_iter
 
     '''
     one_rate = 1-missing_rate
