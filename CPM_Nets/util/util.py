@@ -62,7 +62,7 @@ class DataSet(object):
                     self.MX['0'] = np.logical_not(np.isnan(data[v_num]))
                 else:
                     self.MX['0'] = np.concatenate((self.MX['0'],
-                                                   np.logical_not(np.isnan(data[v_num]))), axis=0)
+                                                   np.logical_not(np.isnan(data[v_num]))), axis=1)
                 if np.isnan(self.data[str(v_num)]).sum() > 0:
                     for ith_col in range(self.data[str(v_num)].shape[1]):
                         imputed = self.data[str(v_num)][:, ith_col][
@@ -74,7 +74,7 @@ class DataSet(object):
                 if v_num == '0':
                     self.data['0'] = Normalize(self.data['0'])
                 self.data['0'] = \
-                    np.concatenate((self.data['0'], Normalize(self.data[str(v_num)])), axis=0)
+                    np.concatenate((self.data['0'], Normalize(self.data[str(v_num)])), axis=1)
 
 
     @property
@@ -145,9 +145,9 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True):
                 X_train[v_num] = Normalize(X_train[v_num])
                 X_test[v_num] = Normalize(X_test[v_num])
         '''
-        alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator)
-        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator)
-        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator)
+        alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator, multi_view=multi_view)
+        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view=multi_view)
+        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view=multi_view)
         return alldata, traindata, testdata, view_number
     else:
         train_idx, test_idx, labels_train,  labels_test = \

@@ -7,6 +7,9 @@ from util.util import xavier_init
 from sklearn.metrics import roc_auc_score
 #tf.compat.v1.enable_eager_execution()
 import torch
+import pickle5 as pickle
+from util.util import read_data
+from sklearn.svm import SVC
 def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
     tf.executing_eagerly()
     mx_ori_nume = dict()
@@ -90,3 +93,26 @@ def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
 
 
     return mean_error_nume, mean_auc, sn_for_testing
+
+
+
+
+
+def classification_evaluation(feature_path, gt):
+    with open(feature_path, 'rb') as handle:
+        data = pickle.load(handle)
+    trainData, testData, view_num = \
+        read_data(feature_path,  ratio=0.8, Normal=1, multi_view = True)
+
+
+    for i in trainData.keys():
+        if i == '0':
+            train_features =  trainData['0']
+        else:
+            train_features = np.concatenate((train_features,))
+
+    clf= SVC(kernel='linear')
+    clf.fit(train_features, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))]
+    for
