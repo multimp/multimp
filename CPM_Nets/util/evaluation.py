@@ -98,7 +98,7 @@ def evaluate(original, imputed, sn, original_MX, cat_indicator, view_num):
 
 
 
-def classification_evaluation(feature_path, gt):
+def classification_evaluation(feature_path):
     with open(feature_path, 'rb') as handle:
         data = pickle.load(handle)
     trainData, testData, view_num = \
@@ -116,4 +116,27 @@ def classification_evaluation(feature_path, gt):
     clf= SVC(kernel='linear')
     clf.fit(train_features, trainData.labels)
     accuracy = clf.score(testData.data, testData.labels)
-    return
+    return accuracy
+
+
+def batch_evaluation(root, results_path, savepath):
+    import os
+    import pandas as pd
+    methods = ['CPMNets', 'CPMNets_ori']
+    mv = ['multiview_True', 'multiview_False']
+    missing_rate = [0.1, 0.2, 0.3, 0.4, 0.5]
+    dict_results = pd.read_csv(results_path, header=0)
+    #for imethod in methods:
+    #    for i_view in mv:
+    #        for i_mr in missing_rate:
+    for i in range(len(dict_results)):
+        imethod = dict_results['model'][i]
+        i_view = dict_results['multi_view'][i]
+        i_mr = dict_results['missing_rate'][i]
+        os.path.join(root, imethod + '_' + str(i_view), str(i_mr))
+        feature_path = 'adni_missing_rate_' + str(i_mr) + '.pkl'
+        acc = classification_evaluation(feature_path)
+        dict_results = pd.read_csv(results_path, header=0)
+        dict_results['accuracy'] = acc
+    dict_results.to_csv(savepath, index=None)
+    return dict_results

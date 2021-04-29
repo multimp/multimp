@@ -54,8 +54,8 @@ class DataSet(object):
             self.MX = dict()
             self._num_examples = data[0].shape[0]
             self._labels = labels
-            for v_num in range(view_number):
-                self.data[str(v_num)] = data[v_num]
+            #for v_num in range(view_number):
+            #    self.data[str(v_num)] = data[v_num]
 
             for v_num in range(view_number):
                 if v_num == 0:
@@ -63,18 +63,18 @@ class DataSet(object):
                 else:
                     self.MX['0'] = np.concatenate((self.MX['0'],
                                                    np.logical_not(np.isnan(data[v_num]))), axis=1)
-                if np.isnan(self.data[str(v_num)]).sum() > 0:
-                    for ith_col in range(self.data[str(v_num)].shape[1]):
-                        imputed = self.data[str(v_num)][:, ith_col][
-                            np.logical_not(np.isnan(self.data[str(v_num)])[:, ith_col])].mean()
-                        self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col],
-                                                                          nan=imputed)
+                if np.isnan(data[v_num]).sum() > 0:
+                    for ith_col in range(data[v_num].shape[1]):
+                        imputed = data[v_num][:, ith_col][
+                            np.logical_not(np.isnan(data[v_num])[:, ith_col])].mean()
+                        data[v_num][:, ith_col] = np.nan_to_num(data[v_num][:, ith_col], nan=imputed)
                 # self.data[str(v_num)] = np.nan_to_num(self.data[str(v_num)], nan=0)
-            for v_num in self.data.keys():
-                if v_num == '0':
-                    self.data['0'] = Normalize(self.data['0'])
-                self.data['0'] = \
-                    np.concatenate((self.data['0'], Normalize(self.data[str(v_num)])), axis=1)
+            for v_num in range(len(data)):
+                if v_num == 0:
+                    self.data['0'] = Normalize(data[0])
+                else:
+                    self.data['0'] = \
+                        np.concatenate((self.data['0'], Normalize(data[v_num])), axis=1)
 
 
     @property
