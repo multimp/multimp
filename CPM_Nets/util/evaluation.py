@@ -12,6 +12,16 @@ import pickle5 as pickle
 from util.util import read_data
 from sklearn.svm import SVC
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+def Normalize(data):
+    """
+    :param data:Input data
+    :return:normalized data
+    """
+    m = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    #m = np.mean(data)
+    #std = np.std(data)
+    return (data - m) / (std + 1e-3)
 
 def transform_format(data_both, idx_record):
     data= dict()
@@ -75,8 +85,10 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
                                                        original_nume[str(i_view)][:, ith_col][sn_for_testing_nume[str(i_view)][:, ith_col]])**2).sum()
             error_nume[str(i_view)].append((current_mse**0.5)/(maxv - minv))
         '''
-        error_nume[str(i_view)] = ((imputed_nume[str(i_view)][sn_for_testing_nume[str(i_view)]] -
-                                                 original_nume[str(i_view)][sn_for_testing_nume[str(i_view)]])**2).sum()
+
+        error_nume[str(i_view)] = \
+            ((imputed_nume[str(i_view)][sn_for_testing_nume[str(i_view)]] -
+             original_nume[str(i_view)][sn_for_testing_nume[str(i_view)]])**2).sum()
     error_cat = []
     for i_view in range(int(view_num)):
         if cat_indicator[str(i_view)].sum() > 0:

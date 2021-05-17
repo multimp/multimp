@@ -79,22 +79,28 @@ def SVM_eval(features, labels):
 
 ################### starts #############################
 
-allData, trainData, testData, view_num = \
-    read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl',
-              Normal=1,
-              multi_view=False)
+
 
 imputed_mean = {}
 imputed_knn = {}
 view_num = 1
 acc_knn = {}
 acc_mean = {}
-missing_rate = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+missing_rate = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
 for i_missing in missing_rate:
-    Sn_all = get_sn(allData, view_num, allData.num_examples, i_missing)
+    #Sn_all = get_sn(allData, view_num, allData.num_examples, i_missing)
+    allData, trainData, testData, view_num = \
+        read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
+                  Normal=1,
+                  multi_view=False, missing_rate=i_missing)
+    Sn_all = allData.Sn_both
     for i in allData.data.keys():
-         imputed_mean[str(i)] = impute_mean(allData.data[str(i)], Sn_all[str(i)])
-         imputed_knn[str(i)] = impute_knn(allData.data[str(i)], Sn_all[str(i)], hyperparams={'k':[6]})
+        Sn_all[i] = \
+            np.logical_xor(np.logical_not(allData.Sn[i]),
+                           np.logical_not(allData.MX[i])).astype('bool')[:, np.logical_not(allData.cat_indicator[i])]
+        data = allData.data[i][:, np.logical_not(allData.cat_indicator[i])]
+        imputed_mean[i] = impute_mean(data, Sn_all[i])
+        imputed_knn[i] = impute_knn(data, Sn_all[i], hyperparams={'k':[6]})
     acc_mean[i_missing] = SVM_eval(imputed_mean['0'], allData.labels)
     acc_knn[i_missing] = SVM_eval(imputed_knn['0'], allData.labels)
 

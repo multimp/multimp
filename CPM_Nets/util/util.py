@@ -5,10 +5,12 @@ from numpy.random import shuffle
 import tensorflow as tf
 import pickle5 as pickle
 from sklearn.model_selection import train_test_split
-from util.get_sn import get_sn
+
 from numpy.random import randint
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 np.random.seed(0)
+from sklearn.preprocessing import MinMaxScaler
+
 class DataSet(object):
 
     def __init__(self, data, view_number, labels, cat_indicator=None, multi_view=True, missing_rate=0.1):
@@ -196,12 +198,17 @@ def Normalize(data):
     :param data:Input data
     :return:normalized data
     """
-
+    '''
     m = np.mean(data, axis=0)
     std = np.std(data, axis=0)
     #m = np.mean(data)
     #std = np.std(data)
+
     return (data - m) / (std + 1e-3)
+    '''
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    data = scaler.fit_transform(data)
+    return data
 
 
 def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):

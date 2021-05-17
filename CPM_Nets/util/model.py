@@ -226,7 +226,7 @@ class CPMNets():
                 tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
                                                     2.0), self.sn[i_view]))
             loss_regr += loss_from_numeric_vs
-            '''
+
             # cls for categorical features
             if len(self.idx_record[i_view]['cat']) > 0:
                 loss_from_cat_vs = 0.0
@@ -241,7 +241,7 @@ class CPMNets():
                             onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
                         reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
                 loss_cls += loss_from_cat_vs
-            '''
+
         return loss_regr, loss_cls
     '''
     def classification_loss(self):
