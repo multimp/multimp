@@ -15,8 +15,8 @@ import pickle
 
 
 # 1. read
-adnimerge = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/tabular data/ADNIMERGE.csv'
-gene_expression = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/ADNI_Gene_Expression_Profile/ADNI_Gene_Expression_Profile.csv'
+adnimerge = 'E:/UNC-CS-Course/COMP 790-166/project/data/ADNI/tabular data/ADNIMERGE.csv'
+gene_expression = 'E:/UNC-CS-Course/COMP 790-166/project/data/ADNI/ADNI_Gene_Expression_Profile/ADNI_Gene_Expression_Profile.csv'
 df_tabular_data = pd.read_csv(adnimerge)
 df_gene_expression = pd.read_csv(gene_expression, skiprows=[0, 1, 3, 4, 5, 6, 7, 8]).iloc[:, 3:-1].T
 
@@ -93,15 +93,16 @@ list_of_categorical_features = \
 list_of_binary_cat_feat = []
 for i_cat_feat in list_of_categorical_features:
     current_cat = df_person_clinical[i_cat_feat].values
-    encoder_onehot = OneHotEncoder()
+    #encoder_onehot = OneHotEncoder()
     encoder_label = LabelEncoder()
     encoded_labels = encoder_label.fit_transform(current_cat)[:, None]
-    encoded_labels = encoder_onehot.fit_transform(encoded_labels).toarray()
-    for i_col in range(encoded_labels.shape[1]):
-        df_person_clinical.insert(df_person_clinical.shape[1],
-                                  i_cat_feat + '_' + str(i_col),
-                                  encoded_labels[:, i_col])
-        list_of_binary_cat_feat.append(i_cat_feat + '_' + str(i_col))
+    #encoded_labels = encoder_onehot.fit_transform(encoded_labels).toarray()
+    #for i_col in range(encoded_labels.shape[1]):
+    df_person_clinical.insert(df_person_clinical.shape[1],
+                              i_cat_feat + '_cat',
+                              encoded_labels.squeeze())
+    list_of_binary_cat_feat.append(i_cat_feat + '_cat')
+
 # delete cat original_features
 for i_cat_feat in list_of_categorical_features:
     df_person_clinical.drop(i_cat_feat, axis=1, inplace=True)
@@ -131,9 +132,9 @@ for i_varaible in df_person_clinical.columns:
 
 
 # 5. save and concate
-clinical_path = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/arranged/clinical.csv'
-gene_path = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/arranged/gene.csv'
-mat_path = 'E:/UNC-CS-Course/COMP 790-166/project/multimp/data/ADNI/arranged/adni_tabular.pkl'
+clinical_path = 'E:/UNC-CS-Course/COMP 790-166/project/data/ADNI/arranged/clinical_v2.csv'
+gene_path = 'E:/UNC-CS-Course/COMP 790-166/project/data/ADNI/arranged/gene_v2.csv'
+mat_path = 'E:/UNC-CS-Course/COMP 790-166/project/data/ADNI/arranged/adni_tabular_v2.pkl'
 df_person_clinical.to_csv(clinical_path)
 df_gene.to_csv(gene_path)
 views = dict()

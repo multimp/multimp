@@ -1,16 +1,20 @@
-
 import util.classfiy as classfiy
 import tensorflow as tf
 import numpy as np
 from numpy.random import shuffle
 from util.util import xavier_init
+
 tf.compat.v1.disable_eager_execution()
-#tf.compat.v1.enable_eager_execution()
+# tf.compat.v1.enable_eager_execution()
 from sklearn.metrics import roc_auc_score
+
+
 class CPMNets():
     """build model
     """
-    def __init__(self, view_num, idx_record, trainLen, testLen, layer_size, layer_size_d, lsd_dim=128, learning_rate=[0.001, 0.001], lamb=1):
+
+    def __init__(self, view_num, cat_indicator, trainLen, testLen, layer_size, layer_size_d, lsd_dim=128,
+                 learning_rate=[0.001, 0.001], lamb=1):
         """
         :param learning_rate:learning rate of network and h
         :param view_num:view number
@@ -20,7 +24,7 @@ class CPMNets():
         :param testLen:testing dataset samples
         """
         # initialize parameter
-        self.idx_record = idx_record
+        self.cat_indicator = cat_indicator
         self.view_num = view_num
         self.layer_size = layer_size
         self.layer_size_d = layer_size_d
@@ -30,8 +34,8 @@ class CPMNets():
         self.lamb = lamb
         # initialize latent space data
         self.h_train, self.h_train_update = self.H_init('train')
-        #self.h_test, self.h_test_update = self.H_init('test')
-        self.h = self.h_train #tf.concat([self.h_train, self.h_test], axis=0)
+        self.h_test, self.h_test_update = self.H_init('test')
+        self.h = tf.concat([self.h_train, self.h_test], axis=0)
         self.h_index = tf.compat.v1.placeholder(tf.int32, shape=[None, 1], name='h_index')
         self.h_temp = tf.gather_nd(self.h, self.h_index)
         # initialize the input data
@@ -40,8 +44,8 @@ class CPMNets():
         self.sn = dict()
         for v_num in range(self.view_num):
             self.input[str(v_num)] = \
-                tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]], name='input' + str(v_num))
-
+                tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
+                                         name='input' + str(v_num))
             self.output[str(v_num)] = \
                 tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
                                          name='output' + str(v_num))
@@ -52,8 +56,7 @@ class CPMNets():
         self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, ], name='gt')
 
         # bulid the model
-        #self.train_op, self.loss = self.bulid_model([self.h_train_update, self.h_test_update], learning_rate)
-        self.train_op, self.loss = self.bulid_model([self.h_train_update, ], learning_rate)
+        self.train_op, self.loss = self.bulid_model([self.h_train_update, self.h_test_update], learning_rate)
         # open session
         gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
         self.sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
@@ -77,7 +80,6 @@ class CPMNets():
             pred_gen[str(v_num)], gen_y[str(v_num)] = \
                 self.Discriminator_net_for_gen(net[str(v_num)], v_num)
 
-
         # calculate reconstruction loss
         reco_loss_regre, reco_loss_cls = self.reconstruction_loss(net)
 
@@ -86,7 +88,6 @@ class CPMNets():
         # gan generator loss
 
         generator_loss = self.generator_loss(pred_gen, gen_y)
-
 
         recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
         gan_loss = tf.add(discriminator_loss, generator_loss)
@@ -101,33 +102,33 @@ class CPMNets():
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
             .minimize(recons_loss + generator_loss, var_list=h_update[0])
 
-        '''
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
             .minimize(recons_loss, var_list=h_update[1])
-        '''
-        
+
         # generator
-        #train_generator_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
+        # train_generator_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
         #    .minimize(generator_loss, var_list=tf.compat.v1.get_collection('weight'))
         # discriminator
         train_discriminator_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
             .minimize(discriminator_loss, var_list=tf.compat.v1.get_collection('weight_discri'))
 
-
         return [train_net_op,
-                train_hn_op, #adj_hn_op,
+                train_hn_op, adj_hn_op,
                 train_discriminator_op], \
                [all_loss, recons_loss, gan_loss,
                 generator_loss, discriminator_loss,
                 reco_loss_regre, reco_loss_cls]
 
-        #return [train_net_op], \
+        # return [train_net_op], \
         #       [reco_loss_regre]
 
-
-
-
+    def transform_cat_outputs(self, net, vnum):
+        out = tf.compat.v1.identity(net)
+        ind = tf.where(self.cat_indicator[str(vnum)].astype('bool'))
+        catT = tf.sigmoid(tf.gather(tf.transpose(out), ind))
+        out = tf.transpose(tf.tensor_scatter_nd_update(tf.transpose(out), ind, catT))
+        return out
 
     def H_init(self, a):
         with tf.compat.v1.variable_scope('H' + a):
@@ -148,18 +149,17 @@ class CPMNets():
 
     def Discriminator_net(self, x_real, x_generated, v):
         # concate and suffle data
-        x_real = x_real * tf.cast(self.sn[str(v)], tf.float32) + x_generated * (1 -  tf.cast(self.sn[str(v)], tf.float32))
+        x_real = x_real * self.sn[str(v)] + x_generated * (1 - self.sn[str(v)])
         x_feat = tf.concat((x_real, x_generated), axis=0)
-
         y = tf.concat((tf.ones_like(self.gt), tf.zeros_like(self.gt)), axis=0)
         y = tf.one_hot(y, 2)
-        #sess = tf.compat.v1.InteractiveSession()
-        #x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
-        #x_feat = x_y[:, 0:-1]
-        #y = tf.cast(x_y[:, -1], tf.bool)[:, None]
+        # sess = tf.compat.v1.InteractiveSession()
+        # x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
+        # x_feat = x_y[:, 0:-1]
+        # y = tf.cast(x_y[:, -1], tf.bool)[:, None]
         weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
         layer_d = tf.matmul(x_feat, weight_d['w0']) + weight_d['b0']
-        for num in range(1, len(self.layer_size_d[v])-1):
+        for num in range(1, len(self.layer_size_d[v]) - 1):
             layer = tf.nn.relu(layer_d)
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
         return layer, y
@@ -171,11 +171,10 @@ class CPMNets():
 
         weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
         layer_d = tf.matmul(x_generated, weight_d['w0']) + weight_d['b0']
-        for num in range(1, len(self.layer_size_d[v])-1):
+        for num in range(1, len(self.layer_size_d[v]) - 1):
             layer = tf.nn.relu(layer_d)
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
         return layer, y
-
 
     def initialize_weight(self, dims_net):
         all_weight = dict()
@@ -194,55 +193,43 @@ class CPMNets():
     def initialize_weight_for_discr(self, dims_net_discr):
         all_weight = dict()
         with tf.compat.v1.variable_scope('weight_discri'):
-            #all_weight['w0'] = tf.Variable(xavier_init(dims_net_discr[0], dims_net_discr[1]))
-            #all_weight['b0'] = tf.Variable(tf.zeros([dims_net_discr[1]]))
-            #tf.compat.v1.add_to_collection("weight_discri", all_weight['w' + str(0)])
-            #tf.compat.v1.add_to_collection("weight_discri", all_weight['b' + str(0)])
+            # all_weight['w0'] = tf.Variable(xavier_init(dims_net_discr[0], dims_net_discr[1]))
+            # all_weight['b0'] = tf.Variable(tf.zeros([dims_net_discr[1]]))
+            # tf.compat.v1.add_to_collection("weight_discri", all_weight['w' + str(0)])
+            # tf.compat.v1.add_to_collection("weight_discri", all_weight['b' + str(0)])
             for num in range(0, len(dims_net_discr)):
-                all_weight['w' + str(num-1)] = tf.Variable(xavier_init(dims_net_discr[num - 1], dims_net_discr[num]))
-                all_weight['b' + str(num-1)] = tf.Variable(tf.zeros([dims_net_discr[num]]))
-                tf.compat.v1.add_to_collection("weight_discri", all_weight['w' + str(num-1)])
-                tf.compat.v1.add_to_collection("weight_discri", all_weight['b' + str(num-1)])
+                all_weight['w' + str(num - 1)] = tf.Variable(xavier_init(dims_net_discr[num - 1], dims_net_discr[num]))
+                all_weight['b' + str(num - 1)] = tf.Variable(tf.zeros([dims_net_discr[num]]))
+                tf.compat.v1.add_to_collection("weight_discri", all_weight['w' + str(num - 1)])
+                tf.compat.v1.add_to_collection("weight_discri", all_weight['b' + str(num - 1)])
         return all_weight
-
 
     def reconstruction_loss(self, net):
         loss_regr = 0
         loss_cls = 0
-        for i_view in self.input.keys():
-            # regression for numerical features
-            #loss_from_numeric_vs = tf.reduce_sum(
-                #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
-                #                                    2.0), ca_mask), self.sn[str(num)]), )
-            '''
-            reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
-            input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
-            sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
+        for num in range(self.view_num):
+            ca_mask = tf.cast(tf.logical_not(self.cat_indicator[str(num)]), tf.float32)
+            # loss_from_numeric_vs = tf.reduce_sum(
+            # tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
+            #                                    2.0), ca_mask), self.sn[str(num)]), )
             loss_from_numeric_vs = tf.reduce_sum(
-            tf.boolean_mask(tf.pow(tf.subtract(reconst_val_i, input_val_i),
-                                               2.0), sn_val_i))
-            '''
-            loss_from_numeric_vs = tf.reduce_sum(
-                tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
-                                                    2.0), self.sn[i_view]))
+                tf.boolean_mask(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
+                                       2.0), self.sn[str(num)]), )
             loss_regr += loss_from_numeric_vs
             '''
-            # cls for categorical features
-            if len(self.idx_record[i_view]['cat']) > 0:
+            if self.cat_indicator[str(num)].sum() > 0:
                 loss_from_cat_vs = 0.0
-                for ith_cat in self.idx_record[i_view]['cat'].keys():
-
-                    reconst_cat_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-                    input_cat_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-                    sn_cat_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-
-                    loss_from_cat_vs += tf.compat.v1.losses.softmax_cross_entropy(
-                            logits=tf.boolean_mask(reconst_cat_i, sn_cat_i),
-                            onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
-                        reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
+                for ith_cat in np.where(self.cat_indicator[str(num)])[0]:
+                    logits = tf.gather(tf.transpose(net[str(num)]), ith_cat)
+                    labels = tf.gather(tf.transpose(self.input[str(num)]), ith_cat)
+                    sn = tf.gather(tf.transpose(self.sn[str(num)]), ith_cat)
+                    loss_from_cat_vs += tf.compat.v1.losses.sigmoid_cross_entropy(
+                            logits=logits*sn,
+                            multi_class_labels=labels*sn)
                 loss_cls += loss_from_cat_vs
             '''
         return loss_regr, loss_cls
+
     '''
     def classification_loss(self):
         F_h_h = tf.matmul(self.h_temp, tf.transpose(self.h_temp))
@@ -263,16 +250,16 @@ class CPMNets():
     '''
 
     def discriminator_loss(self,
-            discriminator_outputs,
-            discriminator_labels,
-            label_smoothing=0,
-            weights=1.0,
-            scope=None,
-            loss_collection=tf.compat.v1.GraphKeys.LOSSES,
-            reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
-            add_summaries=False):
+                           discriminator_outputs,
+                           discriminator_labels,
+                           label_smoothing=0,
+                           weights=1.0,
+                           scope=None,
+                           loss_collection=tf.compat.v1.GraphKeys.LOSSES,
+                           reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
+                           add_summaries=False):
         loss = 0
-        with tf.compat.v1.name_scope(scope, 'discriminator_loss',) as scope:
+        with tf.compat.v1.name_scope(scope, 'discriminator_loss', ) as scope:
             # (discriminator_outputs, discriminator_labels, weights, label_smoothing)
             # -log((1 - label_smoothing) - sigmoid(D(x)))
             for ith_view in range(int(self.view_num)):
@@ -292,43 +279,37 @@ class CPMNets():
         return loss
 
     def generator_loss(self,
-            discriminator_outputs,
-            discriminator_labels,
-            label_smoothing=0.0,
-            weights=1.0,
-            scope=None,
-            loss_collection=tf.compat.v1.GraphKeys.LOSSES,
-            reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
-            add_summaries=False):
+                       discriminator_outputs,
+                       discriminator_labels,
+                       label_smoothing=0.0,
+                       weights=1.0,
+                       scope=None,
+                       loss_collection=tf.compat.v1.GraphKeys.LOSSES,
+                       reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS,
+                       add_summaries=False):
         loss = 0
         with tf.compat.v1.name_scope(scope, 'generator_loss') as scope:
             loss -= \
                 self.discriminator_loss(
-                discriminator_outputs,
-                discriminator_labels,
-                weights=weights,  scope=scope, label_smoothing=0,
-                loss_collection=loss_collection,
-                reduction=reduction)
+                    discriminator_outputs,
+                    discriminator_labels,
+                    weights=weights, scope=scope, label_smoothing=0,
+                    loss_collection=loss_collection, reduction=reduction)
 
         if add_summaries:
             tf.compat.v1.summary.scalar('generator_loss', loss)
 
         return loss
 
-
-
-    def train(self, data, sn, gt, epoch, step=[1, 1, 1, 1]):
+    def train(self, data, sn, gt, epoch, step=[5, 5, 5, 5]):
         global ReconstructionLoss, ClsLoss, GeneratorLoss, DiscriminatorLoss, AllLoss
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
         gt = gt[index]
-        '''
         for i in sn.keys():
             sn[i] = sn[i][index]
-            #data[i] = data[i][index]
-        '''
         feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
-        feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
+        feed_dict.update({self.sn[str(i)]: sn[str(i)] for i in range(self.view_num)})
         feed_dict.update({self.gt: gt})
         feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
         for iter in range(epoch):
@@ -341,15 +322,15 @@ class CPMNets():
             for i in range(step[1]):
                 _, AllLoss = self.sess.run(
                     [self.train_op[1], self.loss[0]], feed_dict=feed_dict)
-            
+
             # update the generator
-            #for i in range(step[3]):
+            # for i in range(step[3]):
             #    _, GeneratorLOSS = self.sess.run(
             #        [self.train_op[3], self.loss[3]], feed_dict=feed_dict)
             # updata the discriminator
             for i in range(step[3]):
                 _, DiscriminatorLoss = self.sess.run(
-                    [self.train_op[2], self.loss[4]], feed_dict=feed_dict)
+                    [self.train_op[3], self.loss[4]], feed_dict=feed_dict)
 
             output = "Epoch : {:.0f}  ===> " \
                      "All Loss = {:.4f}, " \
@@ -400,10 +381,3 @@ class CPMNets():
     def get_h_all(self):
         lsd = self.sess.run(self.h_train)
         return lsd
-
-    #def recover(self):
-    #    net = dict()
-    #    net= self.sess.run(self.output)
-    #    return net
-
-

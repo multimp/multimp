@@ -8,7 +8,7 @@ tf.compat.v1.disable_eager_execution()
 class CPMNets_ori():
     """build model
     """
-    def __init__(self, view_num, cat_indicator, trainLen, testLen, layer_size, lsd_dim=128, learning_rate=[0.001, 0.001], lamb=1):
+    def __init__(self, view_num, idx_record, trainLen, testLen, layer_size, lsd_dim=128, learning_rate=[0.001, 0.001], lamb=1):
         """
         :param learning_rate:learning rate of network and h
         :param view_num:view number
@@ -18,7 +18,7 @@ class CPMNets_ori():
         :param testLen:testing dataset samples
         """
         # initialize parameter
-        self.cat_indicator = cat_indicator
+        self.idx_record = idx_record
         self.view_num = view_num
         self.layer_size = layer_size
         self.lsd_dim = lsd_dim
@@ -39,7 +39,8 @@ class CPMNets_ori():
             self.input[str(v_num)] = tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
                                                     name='input' + str(v_num))
             self.sn[str(v_num)] = \
-                tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]], name='sn' + str(v_num))
+                tf.compat.v1.placeholder(tf.bool, shape=[None, self.layer_size[v_num][-1]], name='sn' + str(v_num))
+
             self.output[str(v_num)] = \
                 tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
                                          name='output' + str(v_num))
@@ -59,21 +60,21 @@ class CPMNets_ori():
             net[str(v_num)] = self.Encoding_net(self.h_temp, v_num)
             self.output[str(v_num)] = net[str(v_num)]
         # calculate reconstruction loss
-        reco_loss = self.reconstruction_loss(net)
+        reco_regr_loss, reco_cls_loss = self.reconstruction_loss(net)
         # calculate classification loss
         #class_loss = self.classification_loss()
-        all_loss = reco_loss #tf.add(reco_loss, self.lamb * class_loss)
+        all_loss = tf.add(reco_regr_loss, reco_cls_loss)
         # train net operator
         # train the network to minimize reconstruction loss
         train_net_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
-            .minimize(reco_loss, var_list=tf.compat.v1.get_collection('weight'))
+            .minimize(all_loss, var_list=tf.compat.v1.get_collection('weight'))
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
-            .minimize(reco_loss, var_list=h_update[0])
+            .minimize(all_loss, var_list=h_update[0])
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
-            .minimize(reco_loss, var_list=h_update[1])
-        return [train_net_op, train_hn_op, adj_hn_op], [reco_loss, all_loss]
+            .minimize(all_loss, var_list=h_update[1])
+        return [train_net_op, train_hn_op, adj_hn_op], [reco_regr_loss, all_loss]
 
     def H_init(self, a):
         with tf.compat.v1.variable_scope('H' + a):
@@ -104,7 +105,7 @@ class CPMNets_ori():
                 tf.compat.v1.add_to_collection("weight", all_weight['w' + str(num)])
                 tf.compat.v1.add_to_collection("weight", all_weight['b' + str(num)])
         return all_weight
-
+    '''
     def reconstruction_loss(self, net):
         loss = 0
         for num in range(self.view_num):
@@ -112,6 +113,45 @@ class CPMNets_ori():
                 tf.boolean_mask(tf.pow(tf.subtract(net[str(num)], self.input[str(num)])
                        , 2.0), self.sn[str(num)]),)
         return loss
+    '''
+
+    def reconstruction_loss(self, net):
+        loss_regr = 0
+        loss_cls = 0
+        for i_view in self.input.keys():
+            # regression for numerical features
+            #loss_from_numeric_vs = tf.reduce_sum(
+                #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
+                #                                    2.0), ca_mask), self.sn[str(num)]), )
+            '''
+            reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
+            input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
+            sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
+            loss_from_numeric_vs = tf.reduce_sum(
+            tf.boolean_mask(tf.pow(tf.subtract(reconst_val_i, input_val_i),
+                                               2.0), sn_val_i))
+            '''
+            loss_from_numeric_vs = tf.reduce_sum(
+                tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
+                                                    2.0), self.sn[i_view]))
+            loss_regr += loss_from_numeric_vs
+            '''
+            # cls for categorical features
+            if len(self.idx_record[i_view]['cat']) > 0:
+                loss_from_cat_vs = 0.0
+                for ith_cat in self.idx_record[i_view]['cat'].keys():
+
+                    reconst_cat_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
+                    input_cat_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
+                    sn_cat_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
+
+                    loss_from_cat_vs += tf.compat.v1.losses.softmax_cross_entropy(
+                            logits=tf.boolean_mask(reconst_cat_i, sn_cat_i),
+                            onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
+                        reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
+                loss_cls += loss_from_cat_vs
+        '''
+        return loss_regr, loss_cls
 
     def classification_loss(self):
         F_h_h = tf.matmul(self.h_temp, tf.transpose(self.h_temp))
@@ -135,10 +175,10 @@ class CPMNets_ori():
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
         gt = gt[index]
-        for i in sn.keys():
-            sn[i] = sn[i][index]
+        #for i in sn.keys():
+        #    sn[i] = sn[i][index]
         feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
-        feed_dict.update({self.sn[str(i)]: sn[str(i)] for i in range(self.view_num)})
+        feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
         feed_dict.update({self.gt: gt})
         feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
         for iter in range(epoch):

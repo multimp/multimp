@@ -15,12 +15,13 @@ from util.model_ori import CPMNets_ori
 
 warnings.filterwarnings("ignore")
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+np.random.seed(0)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets_ori',
-                        help='view missing rate [default: 0]')
+    parser.add_argument('--model', type=str, default='CPMNets',
+                        help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
     parser.add_argument('--epochs-train', type=int, default=1, metavar='N',
@@ -35,7 +36,7 @@ if __name__ == "__main__":
                         help='saving path')
     parser.add_argument('--unsu', type=bool, default=True,
                         help='view missing rate [default: 0]')
-    parser.add_argument('--multi-view', type=bool, default=False,
+    parser.add_argument('--multi-view', type=bool, default=True,
                         help='whether to use multiview learning')
 
 
@@ -43,17 +44,26 @@ if __name__ == "__main__":
     print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(args.multi_view) + '.')
     # read data
     if args.unsu:
-        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1, multi_view=args.multi_view)
+        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
+                                                           Normal=1,
+                                                           multi_view=args.multi_view,
+                                                           missing_rate=args.missing_rate)
         # Randomly generated missing matrix
-        Sn_all = get_sn(allData, view_num, trainData.num_examples, args.missing_rate)
-    else:
-        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl',
-                                                  ratio=0.8, Normal=1, multi_view=args.multi_view)
 
+    else:
+        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
+                                                  ratio=0.8, Normal=1, multi_view=args.multi_view,
+                                                  missing_rate=args.missing_rate)
+
+    '''
     # Randomly generated missing matrix
     Sn_train = get_sn(trainData, view_num, trainData.num_examples, args.missing_rate)
     Sn_test = get_sn(testData, view_num, testData.num_examples, args.missing_rate)
-    outdim_size = [trainData.data[str(i)].shape[1] for i in range(view_num)]
+    '''
+    # Randomly generated missing matrix
+    Sn_train = allData.Sn_both
+    outdim_size = [allData.data_both[str(i)].shape[1] for i in range(view_num)]
+
     # set layer size
     layer_size = [[outdim_size[i]] for i in range(view_num)]
     layer_size_d = [[outdim_size[i], 128, 2] for i in range(view_num)]
@@ -67,18 +77,19 @@ if __name__ == "__main__":
         if args.model == 'CPMNets':
             # Model building
             model = CPMNets(view_num,
-                            allData.cat_indicator,
+                            allData.idx_record_both,
                             allData.num_examples,
                             testData.num_examples,
                             layer_size, layer_size_d,
                             args.lsd_dim,
                             learning_rate,
                             args.lamb)
-
-            model.train(allData.data, Sn_all, allData.labels, epoch[0])
+            a = allData.Sn_both.copy()
+            b = allData.data_both.copy()
+            model.train(b, a, allData.labels, epoch[0])
         elif args.model == 'CPMNets_ori':
             model = CPMNets_ori(view_num,
-                                allData.cat_indicator,
+                            allData.idx_record_both,
                             allData.num_examples,
                             testData.num_examples,
                             layer_size,
@@ -86,16 +97,22 @@ if __name__ == "__main__":
                             learning_rate,
                             args.lamb)
 
-            model.train(allData.data, Sn_all.copy(), allData.labels, epoch[0])
+            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels, epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
-        imputed_data = model.recover(allData.data, Sn_all, allData.labels)
+        imputed_data = model.recover(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels)
 
         # evaluete method
-        mean_mse, mean_auc, added_missingness = \
-            evaluate(allData.data, imputed_data, Sn_all, allData.MX, model.cat_indicator, view_num)
-        print('MSE is {:.4f}, MeanAUC is {:.4f}'.format(mean_mse, mean_auc))
+        mean_mse, mean_acc, imputed_data, added_missingness = \
+            evaluate(allData.data,
+                     imputed_data,
+                     allData.Sn,
+                     allData.MX,
+                     allData.idx_record_both,
+                     allData.cat_indicator,
+                     view_num)
+        print('MSE is {:.4f}, MeanACC is {:.4f}'.format(mean_mse, mean_acc))
 
         # save results
         root_dir = args.log_dir
@@ -103,6 +120,8 @@ if __name__ == "__main__":
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
         mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))
+        mask_path = os.path.join(root_dir, 'mask', args.model + '_multiview_' + str(args.multi_view),
+                                str(args.missing_rate))
         print('saving in ' + mat_path)
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
@@ -113,21 +132,23 @@ if __name__ == "__main__":
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
         mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
+        missingness_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
         metrics_file = metrics_path +  '/results.csv'
 
         ## caculate results
         current_metrics = {}
         current_metrics['missing_rate'] = [args.missing_rate]
         current_metrics['mse'] = [mean_mse]
-        current_metrics['auc'] = [mean_auc]
+        current_metrics['acc'] = [mean_acc]
         current_metrics['epoch'] = [int(args.epochs_train)]
         current_metrics['model'] = [args.model]
         current_metrics['multi_view'] = [args.multi_view]
 
         ## save to imputations
-        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.MX)
+        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.Sn)
         with open(mat_file, 'wb') as handle:
             pickle.dump(imputed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
         for ith_view in range(int(view_num)):
             mat_path_v = mat_path + '/imputed_adni_missing_rate_' + str(args.missing_rate) + '_view_' + str(ith_view) + '.csv'
@@ -139,7 +160,7 @@ if __name__ == "__main__":
         if os.path.exists(metrics_file):
             metrics = pd.read_csv(metrics_file, header=0)
             new_metrics = metrics.append(pd.DataFrame(current_metrics,
-                                                      columns=['missing_rate', 'auc', 'mse', 'epoch', 'model', 'multi_view'], index=[0]))
+                                                      columns=['missing_rate', 'acc', 'mse', 'epoch', 'model', 'multi_view'], index=[0]))
             new_metrics.to_csv(metrics_file, index=None)
         else:
             pd.DataFrame.from_dict(current_metrics).to_csv(metrics_file, index=None)
