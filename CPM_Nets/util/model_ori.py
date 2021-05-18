@@ -27,8 +27,8 @@ class CPMNets_ori():
         self.lamb = lamb
         # initialize latent space data
         self.h_train, self.h_train_update = self.H_init('train')
-        self.h_test, self.h_test_update = self.H_init('test')
-        self.h = tf.concat([self.h_train, self.h_test], axis=0)
+        #self.h_test, self.h_test_update = self.H_init('test')
+        self.h = self.h_train #tf.concat([self.h_train, self.h_test], axis=0)
         self.h_index = tf.compat.v1.placeholder(tf.int32, shape=[None, 1], name='h_index')
         self.h_temp = tf.gather_nd(self.h, self.h_index)
         # initialize the input data
@@ -47,7 +47,7 @@ class CPMNets_ori():
         # ground truth
         self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, ], name='gt')
         # bulid the model
-        self.train_op, self.loss = self.bulid_model([self.h_train_update, self.h_test_update], learning_rate)
+        self.train_op, self.loss = self.bulid_model([self.h_train_update, ], learning_rate)
         # open session
         gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
         self.sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
@@ -71,10 +71,12 @@ class CPMNets_ori():
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
             .minimize(all_loss, var_list=h_update[0])
+        '''
         # adjust the latent space data
         adj_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
             .minimize(all_loss, var_list=h_update[1])
-        return [train_net_op, train_hn_op, adj_hn_op], [reco_regr_loss, all_loss]
+        '''
+        return [train_net_op, train_hn_op], [reco_regr_loss, all_loss]
 
     def H_init(self, a):
         with tf.compat.v1.variable_scope('H' + a):
@@ -227,9 +229,13 @@ class CPMNets_ori():
         return imputed
 
     def get_h_train(self):
-        lsd = self.sess.run(self.h)
+        lsd = self.sess.run(self.h_train)
         return lsd[0:self.trainLen]
 
     def get_h_test(self):
         lsd = self.sess.run(self.h)
         return lsd[self.trainLen:]
+
+    def get_h_all(self):
+        lsd = self.sess.run(self.h_train)
+        return lsd
