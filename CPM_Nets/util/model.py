@@ -85,7 +85,7 @@ class CPMNets():
         discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
         # gan generator loss
 
-        generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
+        generator_loss = self.generator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
 
 
         recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
@@ -313,7 +313,7 @@ class CPMNets():
                 self.discriminator_loss(
                 discriminator_outputs,
                 discriminator_labels,
-                weights=weights,  scope=scope, label_smoothing=0,
+                weights=weights,  scope=scope, label_smoothing=label_smoothing,
                 loss_collection=loss_collection)
                 #reduction=reduction)
 
@@ -324,7 +324,7 @@ class CPMNets():
 
 
 
-    def train(self, data, sn, gt, epoch, step=[1, 1, 1, 1, 1, 1]):
+    def train(self, data, sn, gt, epoch, step=[2, 2, 2, 2, 2, 2]):
         global ReconstructionLoss, ClsLoss, GeneratorLoss, DiscriminatorLoss, AllLoss
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)

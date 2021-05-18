@@ -91,7 +91,7 @@ class CPMNets_ori():
         weight = self.initialize_weight(self.layer_size[v])
         layer = tf.matmul(h, weight['w0']) + weight['b0']
         for num in range(1, len(self.layer_size[v])):
-            layer = tf.nn.dropout(tf.matmul(layer, weight['w' + str(num)]) + weight['b' + str(num)], 0.9)
+            layer = tf.matmul(layer, weight['w' + str(num)]) + weight['b' + str(num)]
         return layer
 
     def initialize_weight(self, dims_net):
@@ -173,7 +173,7 @@ class CPMNets_ori():
         F_h_hn_mean = tf.compat.v1.reduce_sum(F_h_hn_mean_, axis=1, name='F_h_hn_mean')
         return tf.compat.v1.reduce_sum(tf.nn.relu(tf.add(theta, tf.subtract(F_h_h_mean_max, F_h_hn_mean))))
 
-    def train(self, data, sn, gt, epoch, step=[1, 1]):
+    def train(self, data, sn, gt, epoch, step=[2, 2]):
         global Reconstruction_LOSS
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)

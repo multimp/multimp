@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='CPMNets_ori',
                         help='CPMNets, CPMNets_ori')
-    parser.add_argument('--lsd-dim', type=int, default=1024,
+    parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
     parser.add_argument('--epochs-train', type=int, default=1, metavar='N',
                         help='number of epochs to train [default: 20]')
