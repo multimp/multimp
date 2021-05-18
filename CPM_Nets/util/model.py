@@ -362,7 +362,7 @@ class CPMNets():
             # updata the discriminator
             for i in range(step[1]):
                 _, DiscriminatorLoss = self.sess.run(
-                    [self.train_op[2], self.loss[4]], feed_dict=feed_dict)
+                    [self.train_op[4], self.loss[4]], feed_dict=feed_dict)
 
             output = "Epoch : {:.0f}  ===> " \
                      "All Loss = {:.4f}, " \
