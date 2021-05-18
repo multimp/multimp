@@ -219,7 +219,7 @@ class CPMNets():
             #loss_from_numeric_vs = tf.reduce_sum(
                 #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                 #                                    2.0), ca_mask), self.sn[str(num)]), )
-
+            '''
             reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
@@ -230,7 +230,7 @@ class CPMNets():
             loss_from_numeric_vs = tf.reduce_sum(
                 tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
                                                     2.0), self.sn[i_view]))
-                                                    '''
+
             loss_regr += loss_from_numeric_vs
 
             # cls for categorical features
@@ -324,7 +324,7 @@ class CPMNets():
 
 
 
-    def train(self, data, sn, gt, epoch, step=[2, 2, 2, 2, 2, 2]):
+    def train(self, data, sn, gt, epoch, step=[1, 1, 1, 1, 1, 1]):
         global ReconstructionLoss, ClsLoss, GeneratorLoss, DiscriminatorLoss, AllLoss
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
