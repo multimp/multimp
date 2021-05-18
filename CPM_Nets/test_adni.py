@@ -86,7 +86,7 @@ if __name__ == "__main__":
                             args.lamb)
             a = allData.Sn_both.copy()
             b = allData.data_both.copy()
-            model.train(b, a, allData.labels, epoch[0])
+            model.train(b, a, allData.labels.copy(), epoch[0])
         elif args.model == 'CPMNets_ori':
             model = CPMNets_ori(view_num,
                             allData.idx_record_both,
@@ -97,13 +97,14 @@ if __name__ == "__main__":
                             learning_rate,
                             args.lamb)
 
-            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels, epoch[0])
+            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy(), epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
-        imputed_data = model.recover(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels)
+        imputed_data = model.recover(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy())
         imputed_data = transform_format(imputed_data, allData.idx_record_both)
-        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.Sn)
+        imputed_data = impute_missing_values_using_imputed_matrix(allData.data.copy(), imputed_data.copy(), allData.Sn)
+        latent_vectors = model.get_h_all()
         # evaluete method
         mean_mse, mean_acc, added_missingness = \
             evaluate(allData.data,
@@ -131,8 +132,7 @@ if __name__ == "__main__":
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
         mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))
-        mask_path = os.path.join(root_dir, 'mask', args.model + '_multiview_' + str(args.multi_view),
-                                str(args.missing_rate))
+
         print('saving in ' + mat_path)
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
@@ -143,8 +143,10 @@ if __name__ == "__main__":
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
         mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
-        missingness_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
-        metrics_file = metrics_path +  '/results.csv'
+        mask_file = mat_path + '/mask_adni_missing_rate_' + str(args.missing_rate) + '.pkl'
+        metrics_file = metrics_path + '/results.csv'
+        latent_vectors_file = mat_path + '/latent_adni_missing_rate_' + str(args.missing_rate) + '.csv'
+        labels_file = mat_path + '/labels_adni_missing_rate_' + str(args.missing_rate) + '.csv'
 
         ## caculate results
         current_metrics = {}
@@ -156,11 +158,14 @@ if __name__ == "__main__":
         current_metrics['multi_view'] = [args.multi_view]
 
         ## save to imputations
-
+        #imputed_data = impute_missing_values_using_imputed_matrix(allData.data.copy(), imputed_data, allData.Sn)
         with open(mat_file, 'wb') as handle:
             pickle.dump(imputed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(mask_file, 'wb') as handle:
+            pickle.dump(added_missingness, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
+        pd.DataFrame(latent_vectors).to_csv(latent_vectors_file, index=None, columns=None, header=None)
+        pd.DataFrame(allData.labels).to_csv(labels_file, index=None, columns=None, header=None)
         for ith_view in range(int(view_num)):
             mat_path_v = mat_path + '/imputed_adni_missing_rate_' + str(args.missing_rate) + '_view_' + str(ith_view) + '.csv'
             pd.DataFrame(imputed_data[str(ith_view)]).to_csv(mat_path_v, index=None, columns=None, header=None)
@@ -175,49 +180,3 @@ if __name__ == "__main__":
             new_metrics.to_csv(metrics_file, index=None)
         else:
             pd.DataFrame.from_dict(current_metrics).to_csv(metrics_file, index=None)
-        '''
-        # test
-        if args.unsu:
-            model.test(testData.data, Sn_test, testData.labels.reshape(testData.num_examples, 1), epoch[1])
-        
-        H_test = model.get_h_test()
-        label_pre = classfiy.ave(H_train, H_test, trainData.labels)
-        print('Accuracy on the test set is {:.4f}'.format(accuracy_score(testData.labels, label_pre)))
-        '''
-
-
-
-
-
-
-    '''
-    # supervised
-    else:
-        model = CPMNets(view_num,
-                        trainData.cat_indicator,
-                        trainData.num_examples,
-                        testData.num_examples,
-                        layer_size, layer_size_d,
-                        args.lsd_dim,
-                        learning_rate,
-                        args.lamb)
-        model.train(trainData.data, Sn_train, trainData.labels.reshape(trainData.num_examples, 1), epoch[0])
-        H_train = model.get_h_train()
-
-    # get recovered matrix
-    imputed_data = dict()
-    for v_num in range(model.view_num):
-        imputed_data[str(v_num)] = model.Encoding_net(H_train, v_num)
-    mean_mse, mean_auc = evaluate(trainData.data, imputed_data, Sn_train, trainData.MX, model.cat_indicator, view_num)
-    print('MSE is {:.4f}, MeanAUC is {:.4f}'.format(accuracy_score(mean_mse, mean_auc)))
-
-    # save results
-
-    # test
-    if args.unsu:
-
-        model.test(testData.data, Sn_test, testData.labels.reshape(testData.num_examples, 1), epoch[1])
-    H_test = model.get_h_test()
-    label_pre = classfiy.ave(H_train, H_test, trainData.labels)
-    print('Accuracy on the test set is {:.4f}'.format(accuracy_score(testData.labels, label_pre)))
-    '''

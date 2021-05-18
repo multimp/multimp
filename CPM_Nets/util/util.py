@@ -301,7 +301,11 @@ def xavier_init(fan_in, fan_out, constant=1):
                              dtype=tf.float32)
 
 def impute_missing_values_using_imputed_matrix(originaldata, imputation, sn):
+    imputed = dict()
     for ith_view in sn.keys():
-        missingness = np.logical_not(sn[ith_view])
-        originaldata[ith_view][missingness] = imputation[ith_view][missingness]
-    return originaldata
+        #missingness = np.logical_not(sn[ith_view])
+        #originaldata[ith_view][missingness] = imputation[ith_view][missingness]
+        #imputation[ith_view][sn[ith_view]] = originaldata[ith_view][sn[ith_view]]
+        imputed[ith_view] = originaldata[ith_view] * sn[ith_view].astype('float') + \
+                            imputation[ith_view] * np.logical_not(sn[ith_view]).astype('float')
+    return imputed
