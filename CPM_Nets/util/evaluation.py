@@ -40,7 +40,7 @@ def transform_format(data_both, idx_record):
     return data
 
 def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator, view_num):
-    imputed = transform_format(imputed, idx_record_both)
+
     tf.executing_eagerly()
     mx_ori_nume = dict()
     mx_ori_cat = dict()
@@ -125,7 +125,7 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
     print('Original MSE is {:.4f},'.format(mean_error_nume_meanimp))
 
 
-    return mean_error_nume, mean_acc, imputed, sn_for_testing
+    return mean_error_nume, mean_acc, sn_for_testing
 
 
 

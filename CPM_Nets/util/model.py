@@ -334,8 +334,8 @@ class CPMNets():
         for iter in range(epoch):
             # update the network
             for i in range(step[0]):
-                _, ReconstructionLoss, GeneratorLoss = self.sess.run(
-                    [self.train_op[0], self.loss[1], self.loss[3]], feed_dict=feed_dict)
+                _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
+                    [self.train_op[0], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
 
             # update the h
             for i in range(step[1]):
@@ -354,11 +354,13 @@ class CPMNets():
             output = "Epoch : {:.0f}  ===> " \
                      "All Loss = {:.4f}, " \
                      "Reconstruction Loss = {:.4f}, " \
+                     "Cls Loss = {:.4f}, " \
                      "Generator Loss = {:.4f}, " \
                      "Discriminator Loss = {:.4f}" \
                 .format((iter + 1),
                         AllLoss,
                         ReconstructionLoss,
+                        ClsLoss,
                         GeneratorLoss,
                         DiscriminatorLoss)
             print(output)

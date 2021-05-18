@@ -15,7 +15,7 @@ from util.model_ori import CPMNets_ori
 
 warnings.filterwarnings("ignore")
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
-np.random.seed(0)
+#np.random.seed(0)
 
 if __name__ == "__main__":
     import argparse
@@ -102,9 +102,10 @@ if __name__ == "__main__":
         # get recovered matrix
 
         imputed_data = model.recover(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels)
-
+        imputed_data = transform_format(imputed_data, allData.idx_record_both)
+        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.Sn)
         # evaluete method
-        mean_mse, mean_acc, imputed_data, added_missingness = \
+        mean_mse, mean_acc, added_missingness = \
             evaluate(allData.data,
                      imputed_data,
                      allData.Sn,
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         current_metrics['multi_view'] = [args.multi_view]
 
         ## save to imputations
-        imputed_data = impute_missing_values_using_imputed_matrix(allData.data, imputed_data, allData.Sn)
+
         with open(mat_file, 'wb') as handle:
             pickle.dump(imputed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
