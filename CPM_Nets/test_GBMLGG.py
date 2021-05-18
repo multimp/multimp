@@ -9,6 +9,7 @@ import numpy as np
 from util.util import read_data, impute_missing_values_using_imputed_matrix
 from util.get_sn import get_sn
 from util.model import CPMNets
+from util.model_ori import CPMNets_ori
 import util.classfiy as classfiy
 from sklearn.metrics import accuracy_score
 import os
@@ -25,7 +26,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets_ori',
+    parser.add_argument('--model', type=str, default='CPMNets',
                         help='view missing rate [default: 0]')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
@@ -46,6 +47,7 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
+    args.missing_rate = 0.5
     print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + '.')
 
     # read data
@@ -53,13 +55,13 @@ if __name__ == "__main__":
         # allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl', Normal=1)
         allData, trainData, testData, view_num = read_data('C:/Users/wancenmu/Downloads/GBMLGG/TCGA-GBM_cate.pkl', Normal=1)
         # Randomly generated missing matrix
-        Sn_all = get_sn(allData, view_num, trainData.num_examples, 0.2)
+        Sn_all = get_sn(allData, view_num, trainData.num_examples, args.missing_rate)
         #Sn_all = get_sn(allData, view_num, trainData.num_examples, args.missing_rate)
         # Save
-        # np.save('C:/Users/wancenmu/Downloads/GBMLGG/mask_GBMLGG_0.2.npy', Sn_all) 
+        np.save('C:/Users/wancenmu/Downloads/GBMLGG/mask_GBMLGG_0.5.npy', Sn_all) 
 
         # Load
-        # Sn_all = np.load('C:/Users/wancenmu/Downloads/GBMLGG/mask_GBMLGG_0.1.npy',allow_pickle='TRUE').item()
+        Sn_all = np.load('C:/Users/wancenmu/Downloads/GBMLGG/mask_GBMLGG_0.5.npy',allow_pickle='TRUE').item()
     else:
         trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular.pkl',
                                                   ratio=0.8, Normal=1)
@@ -105,7 +107,8 @@ if __name__ == "__main__":
         # get recovered matrix
 
         imputed_data = model.recover(allData.data, Sn_all, allData.labels)
-
+        H_train = model.get_h_train()
+        pd.DataFrame(H_train).to_csv("C:/Users/wancenmu/Downloads/GBMLGG/latspace30.csv",header=None, index=None)
         # evaluete method
         mean_mse, mean_auc, added_missingness = \
             evaluate(allData.data, imputed_data, Sn_all, allData.MX, model.cat_indicator, view_num)
