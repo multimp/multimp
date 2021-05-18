@@ -123,7 +123,7 @@ class CPMNets_ori():
             #loss_from_numeric_vs = tf.reduce_sum(
                 #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                 #                                    2.0), ca_mask), self.sn[str(num)]), )
-            '''
+
             reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
@@ -134,6 +134,7 @@ class CPMNets_ori():
             loss_from_numeric_vs = tf.reduce_sum(
                 tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
                                                     2.0), self.sn[i_view]))
+                                                    '''
             loss_regr += loss_from_numeric_vs
 
             # cls for categorical features
@@ -170,7 +171,7 @@ class CPMNets_ori():
         F_h_hn_mean = tf.compat.v1.reduce_sum(F_h_hn_mean_, axis=1, name='F_h_hn_mean')
         return tf.compat.v1.reduce_sum(tf.nn.relu(tf.add(theta, tf.subtract(F_h_h_mean_max, F_h_hn_mean))))
 
-    def train(self, data, sn, gt, epoch, step=[5, 5]):
+    def train(self, data, sn, gt, epoch, step=[1, 1]):
         global Reconstruction_LOSS
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
