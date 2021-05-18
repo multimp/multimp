@@ -20,7 +20,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets_ori',
+    parser.add_argument('--model', type=str, default='CPMNets',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
@@ -38,6 +38,8 @@ if __name__ == "__main__":
                         help='view missing rate [default: 0]')
     parser.add_argument('--multi-view', type=int, default=0,
                         help='whether to use multiview learning')
+    parser.add_argument('--run-idx', type=int, default=0,
+                        help='number of run')
 
 
     args = parser.parse_args()
@@ -67,7 +69,7 @@ if __name__ == "__main__":
 
     # set layer size
     layer_size = [[outdim_size[i]] for i in range(view_num)]
-    layer_size_d = [[outdim_size[i], 128, 2] for i in range(view_num)]
+    layer_size_d = [[outdim_size[i], 1] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]
     learning_rate = [0.001, 0.01]
@@ -132,15 +134,18 @@ if __name__ == "__main__":
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
-        mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))
+        mat_path = os.path.join(root_dir, 'imputed', str(args.run_idx), args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))
 
         print('saving in ' + mat_path)
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW))):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW)))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', str(args.run_idx))):
+            os.mkdir(os.path.join(root_dir, 'imputed', str(args.run_idx)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', str(args.run_idx), args.model + '_multiview_' + str(MULTI_VIEW))):
+            os.mkdir(os.path.join(root_dir, 'imputed', str(args.run_idx), args.model + '_multiview_' + str(MULTI_VIEW)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', str(args.run_idx), args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))):
+            os.mkdir(os.path.join(root_dir, 'imputed', str(args.run_idx), args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate)))
+
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
         mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'

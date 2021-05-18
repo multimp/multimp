@@ -44,7 +44,7 @@ class DataSet(object):
                 if np.isnan(self.data[str(v_num)]).sum() > 0:
                     for ith_col in range(self.data[str(v_num)].shape[1]):
                         imputed = self.data[str(v_num)][:, ith_col][self.MX[str(v_num)][:, ith_col]].mean()
-                        self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col], nan=imputed)
+                        self.data[str(v_num)][:, ith_col] = np.nan_to_num(self.data[str(v_num)][:, ith_col], nan=0)#imputed)
                 #self.data[str(v_num)] = np.nan_to_num(self.data[str(v_num)], nan=0)
 
         # merging multi-view data to one view
@@ -91,6 +91,8 @@ class DataSet(object):
         for v_num in self.data_both.keys():
             self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']] = \
                 Normalize(self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']])
+            self.data_both[str(v_num)] = \
+                self.data_both[str(v_num)] * self.Sn_both[str(v_num)].astype('float')
             self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])] = \
                 Normalize(self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])])
 
@@ -211,14 +213,14 @@ def Normalize(data):
     :param data:Input data
     :return:normalized data
     """
-    '''
-    m = np.mean(data, axis=0)
-    std = np.std(data, axis=0)
+
+    #m = np.mean(data, axis=0)
+    #std = np.std(data, axis=0)
     #m = np.mean(data)
     #std = np.std(data)
 
-    return (data - m) / (std + 1e-3)
-    '''
+    #return (data - m) / (std + 1e-3)
+
     scaler = MinMaxScaler(feature_range=(-1, 1))
     data = scaler.fit_transform(data)
     return data
@@ -246,12 +248,12 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):
     X_train = []
     X_test = []
     X_all = []
-    if min(data['gt']) == 0:
-        labels = data['gt'] + 1
-    else:
-        labels = data['gt']
-    labels = labels.squeeze()
-
+    #if min(data['gt']) == 0:
+    #    labels = data['gt'] + 1
+    #else:
+    #    labels = data['gt']
+    #labels = labels.squeeze()
+    labels = data['gt']
     if ratio is None:
         train_idx, test_idx, labels_train,  labels_test = \
             train_test_split(np.arange(len(labels)),

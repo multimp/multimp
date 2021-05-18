@@ -173,18 +173,20 @@ class CPMNets_ori():
         F_h_hn_mean = tf.compat.v1.reduce_sum(F_h_hn_mean_, axis=1, name='F_h_hn_mean')
         return tf.compat.v1.reduce_sum(tf.nn.relu(tf.add(theta, tf.subtract(F_h_h_mean_max, F_h_hn_mean))))
 
-    def train(self, data, sn, gt, epoch, step=[1, 1]):
+    def train(self, data, sn, gt, epoch, step=[5, 5]):
         global Reconstruction_LOSS
-        index = np.array([x for x in range(self.trainLen)])
-        shuffle(index)
-        gt = gt[index]
-        #for i in sn.keys():
-        #    sn[i] = sn[i][index]
-        feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
-        feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
-        feed_dict.update({self.gt: gt})
-        feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
+
         for iter in range(epoch):
+            index = np.array([x for x in range(self.trainLen)])
+            shuffle(index)
+            #gt = gt[index]
+            # for i in sn.keys():
+            #    sn[i] = sn[i][index]
+            feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
+            feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
+            feed_dict.update({self.gt: gt[index]})
+            feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
+
             # update the network
             for i in range(step[0]):
                 _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
