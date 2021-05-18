@@ -20,7 +20,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets',
+    parser.add_argument('--model', type=str, default='CPMNets_ori',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
@@ -36,23 +36,24 @@ if __name__ == "__main__":
                         help='saving path')
     parser.add_argument('--unsu', type=bool, default=True,
                         help='view missing rate [default: 0]')
-    parser.add_argument('--multi-view', type=bool, default=True,
+    parser.add_argument('--multi-view', type=int, default=0,
                         help='whether to use multiview learning')
 
 
     args = parser.parse_args()
-    print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(args.multi_view) + '.')
+    MULTI_VIEW = bool(args.multi_view)
+    print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(MULTI_VIEW) + '.')
     # read data
     if args.unsu:
         allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
                                                            Normal=1,
-                                                           multi_view=args.multi_view,
+                                                           multi_view=MULTI_VIEW,
                                                            missing_rate=args.missing_rate)
         # Randomly generated missing matrix
 
     else:
         trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
-                                                  ratio=0.8, Normal=1, multi_view=args.multi_view,
+                                                  ratio=0.8, Normal=1, multi_view=MULTI_VIEW,
                                                   missing_rate=args.missing_rate)
 
     '''
@@ -131,15 +132,15 @@ if __name__ == "__main__":
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
         metrics_path = os.path.join(root_dir, 'metrics')
-        mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))
+        mat_path = os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))
 
         print('saving in ' + mat_path)
         if not os.path.exists(os.path.join(root_dir, 'imputed')):
             os.mkdir(os.path.join(root_dir, 'imputed'))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view))):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view)))
-        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate))):
-            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(args.multi_view), str(args.missing_rate)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW))):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW)))
+        if not os.path.exists(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate))):
+            os.mkdir(os.path.join(root_dir, 'imputed', args.model + '_multiview_' + str(MULTI_VIEW), str(args.missing_rate)))
         if not os.path.exists(metrics_path):
             os.mkdir(metrics_path)
         mat_file = mat_path + '/adni_missing_rate_' + str(args.missing_rate) + '.pkl'
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         current_metrics['acc'] = [mean_acc]
         current_metrics['epoch'] = [int(args.epochs_train)]
         current_metrics['model'] = [args.model]
-        current_metrics['multi_view'] = [args.multi_view]
+        current_metrics['multi_view'] = [MULTI_VIEW]
 
         ## save to imputations
         #imputed_data = impute_missing_values_using_imputed_matrix(allData.data.copy(), imputed_data, allData.Sn)

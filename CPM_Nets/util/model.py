@@ -74,8 +74,8 @@ class CPMNets():
         for v_num in range(self.view_num):
             discriminator_net[str(v_num)], discriminator_labels[str(v_num)] = \
                 self.Discriminator_net(self.input[str(v_num)], net[str(v_num)], v_num)
-            pred_gen[str(v_num)], gen_y[str(v_num)] = \
-                self.Discriminator_net_for_gen(net[str(v_num)], v_num)
+            #pred_gen[str(v_num)], gen_y[str(v_num)] = \
+            #    self.Discriminator_net_for_gen(net[str(v_num)], v_num)
 
 
         # calculate reconstruction loss
@@ -85,7 +85,7 @@ class CPMNets():
         discriminator_loss = self.discriminator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
         # gan generator loss
 
-        generator_loss = self.generator_loss(pred_gen, gen_y)
+        generator_loss = self.generator_loss(discriminator_net, discriminator_labels)
 
 
         recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
@@ -95,11 +95,16 @@ class CPMNets():
         # train net operator
         # train the network to minimize reconstruction loss and generator loss
         train_net_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
-            .minimize(recons_loss + generator_loss, var_list=tf.compat.v1.get_collection('weight'))
+            .minimize(recons_loss, var_list=tf.compat.v1.get_collection('weight'))
+        train_gen_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \
+            .minimize(generator_loss, var_list=tf.compat.v1.get_collection('weight'))
 
         # train the latent space data to minimize reconstruction loss and classification loss
         train_hn_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
-            .minimize(recons_loss + generator_loss, var_list=h_update[0])
+            .minimize(recons_loss, var_list=h_update[0])
+
+        train_hn_gen_op = tf.compat.v1.train.AdamOptimizer(learning_rate[1]) \
+            .minimize(generator_loss, var_list=h_update[0])
 
         '''
         # adjust the latent space data
@@ -115,8 +120,8 @@ class CPMNets():
             .minimize(discriminator_loss, var_list=tf.compat.v1.get_collection('weight_discri'))
 
 
-        return [train_net_op,
-                train_hn_op, #adj_hn_op,
+        return [train_net_op, train_gen_op,
+                train_hn_op, train_hn_gen_op, #adj_hn_op,
                 train_discriminator_op], \
                [all_loss, recons_loss, gan_loss,
                 generator_loss, discriminator_loss,
@@ -163,7 +168,7 @@ class CPMNets():
             layer = tf.nn.relu(layer_d)
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
         return layer, y
-
+    '''
     def Discriminator_net_for_gen(self, x_generated, v):
         # concate and suffle data
         y = tf.zeros_like(self.gt)
@@ -175,7 +180,7 @@ class CPMNets():
             layer = tf.nn.relu(layer_d)
             layer = tf.matmul(layer, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
         return layer, y
-
+    '''
 
     def initialize_weight(self, dims_net):
         all_weight = dict()
@@ -234,13 +239,14 @@ class CPMNets():
                 for ith_cat in self.idx_record[i_view]['cat'].keys():
 
                     reconst_cat_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-                    input_cat_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
+                    input_cat_i = tf.cast(tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1), tf.int32)
                     sn_cat_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
 
                     loss_from_cat_vs += tf.compat.v1.losses.softmax_cross_entropy(
                             logits=tf.boolean_mask(reconst_cat_i, sn_cat_i),
                             onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
-                        reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
+                            reduction=tf.compat.v1.losses.Reduction.MEAN)
+                        #reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
                 loss_cls += loss_from_cat_vs
 
         return loss_regr, loss_cls
@@ -283,8 +289,8 @@ class CPMNets():
                     weights,
                     label_smoothing,
                     scope,
-                    loss_collection=None,
-                    reduction=reduction)
+                    loss_collection=None)
+                    #reduction=reduction)
 
             tf.compat.v1.losses.add_loss(loss, loss_collection)
             if add_summaries:
@@ -308,8 +314,8 @@ class CPMNets():
                 discriminator_outputs,
                 discriminator_labels,
                 weights=weights,  scope=scope, label_smoothing=0,
-                loss_collection=loss_collection,
-                reduction=reduction)
+                loss_collection=loss_collection)
+                #reduction=reduction)
 
         if add_summaries:
             tf.compat.v1.summary.scalar('generator_loss', loss)
@@ -318,7 +324,7 @@ class CPMNets():
 
 
 
-    def train(self, data, sn, gt, epoch, step=[1, 1, 1, 1]):
+    def train(self, data, sn, gt, epoch, step=[1, 1, 1, 1, 1, 1]):
         global ReconstructionLoss, ClsLoss, GeneratorLoss, DiscriminatorLoss, AllLoss
         index = np.array([x for x in range(self.trainLen)])
         shuffle(index)
@@ -337,18 +343,24 @@ class CPMNets():
             for i in range(step[0]):
                 _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
                     [self.train_op[0], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
+            for i in range(step[0]):
+                _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
+                    [self.train_op[1], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
 
             # update the h
             for i in range(step[1]):
                 _, AllLoss = self.sess.run(
-                    [self.train_op[1], self.loss[0]], feed_dict=feed_dict)
-            
+                    [self.train_op[2], self.loss[0]], feed_dict=feed_dict)
+            for i in range(step[1]):
+                _, AllLoss = self.sess.run(
+                    [self.train_op[3], self.loss[0]], feed_dict=feed_dict)
+
             # update the generator
             #for i in range(step[3]):
             #    _, GeneratorLOSS = self.sess.run(
             #        [self.train_op[3], self.loss[3]], feed_dict=feed_dict)
             # updata the discriminator
-            for i in range(step[3]):
+            for i in range(step[1]):
                 _, DiscriminatorLoss = self.sess.run(
                     [self.train_op[2], self.loss[4]], feed_dict=feed_dict)
 

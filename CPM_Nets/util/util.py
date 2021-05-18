@@ -85,7 +85,7 @@ class DataSet(object):
         #self.value_Sn, \
         #self.cat_MX, \
         #self.record_view_size = \
-        self.data_both, self.Sn_both, self.idx_record_both = \
+        self.data_both, self.Sn_both, self.idx_record_both, self.data, self.Sn= \
         self.transform_to_binaries(self.data, self.Sn, self.cat_indicator)
 
         for v_num in self.data_both.keys():
@@ -169,10 +169,14 @@ class DataSet(object):
         data_both = dict()
         Sn_both = dict()
         idx_record = dict()
+        data_ori = dict()
+        Sn_ori = dict()
 
         for i_view in data.keys():
             data_both[i_view] = value_data[i_view]
             Sn_both[i_view] = value_Sn[i_view]
+            data_ori[i_view] = value_data[i_view]
+            Sn_ori[i_view] = value_Sn[i_view]
             idx_record[i_view] = dict()
             if len(cat_data[i_view]) > 0:
                 idx_record[i_view]['cat'] = dict()
@@ -185,10 +189,19 @@ class DataSet(object):
                     Sn_both[i_view] = np.concatenate((Sn_both[i_view],
                                                       cat_Sn[i_view][i_cat]),
                                                             axis=1)
+                    data_ori[i_view] = np.concatenate((data_ori[i_view],
+                                                        cat_data_multi_cls[i_view][:, [i_cat]]),
+                                                       axis=1)
+                    Sn_ori[i_view] = np.concatenate((Sn_ori[i_view],
+                                                      cat_Sn_multi_cls[i_view][:, [i_cat]]),
+                                                     axis=1)
             else:
                 idx_record[i_view]['cat'] = []
             idx_record[i_view]['value'] = np.arange(value_Sn[i_view].shape[1])
-        return data_both, Sn_both, idx_record
+            current_cat_indicator = np.ones(self.cat_indicator[i_view].shape)
+            current_cat_indicator[idx_record[i_view]['value']] = 0
+            self.cat_indicator[i_view] = current_cat_indicator.astype('bool')
+        return data_both, Sn_both, idx_record, data_ori, Sn_ori
 
 
 
