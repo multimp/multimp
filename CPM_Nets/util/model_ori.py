@@ -183,7 +183,7 @@ class CPMNets_ori():
     def train(self, data, sn, gt, epoch, step=[5, 5]):
         global Reconstruction_LOSS
 
-        for iter in range(epoch-10):
+        for iter in range(epoch):
             index = np.array([x for x in range(self.trainLen)])
             shuffle(index)
             #gt = gt[index]
@@ -206,7 +206,7 @@ class CPMNets_ori():
             output = "Epoch : {:.0f}  ===> Reconstruction Loss = {:.4f}, Classification Loss = {:.4f} " \
                 .format((iter + 1), Reconstruction_LOSS, Classification_LOSS)
             print(output)
-
+        '''
         for iter in range(epoch-10, epoch):
             index = np.array([x for x in range(self.trainLen)])
             shuffle(index)
@@ -226,7 +226,7 @@ class CPMNets_ori():
             output = "Epoch : {:.0f}  ===> Reconstruction Loss = {:.4f}, Classification Loss = {:.4f} " \
                 .format((iter + 1), Reconstruction_LOSS, Classification_LOSS)
             print(output)
-
+        '''
     def test(self, data, sn, gt, epoch):
         feed_dict = {self.input[str(v_num)]: data[str(v_num)] for v_num in range(self.view_num)}
         feed_dict.update({self.sn[str(i)]: sn[str(i)] for i in range(self.view_num)})

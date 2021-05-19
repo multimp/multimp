@@ -68,7 +68,7 @@ if __name__ == "__main__":
     outdim_size = [allData.data_both[str(i)].shape[1] for i in range(view_num)]
 
     # set layer size
-    layer_size = [[outdim_size[i]] for i in range(view_num)]
+    layer_size = [[128, outdim_size[i]] for i in range(view_num)]
     layer_size_d = [[outdim_size[i], 128, 1] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]

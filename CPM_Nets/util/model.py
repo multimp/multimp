@@ -255,7 +255,6 @@ class CPMNets():
                     probs = tf.boolean_mask(tf.compat.v1.math.softmax(reconst_cat_i, axis=1), sn_cat_i)
                     cross_entropy = \
                         tf.compat.v1.math.log(probs + 1e-3) * tf.boolean_mask(input_cat_i, sn_cat_i)
-
                     loss_from_cat_vs -= tf.reduce_sum(cross_entropy)
                 loss_cls += loss_from_cat_vs
 
@@ -349,10 +348,9 @@ class CPMNets():
     def train(self, data, sn, gt, epoch, step=[5, 5, 5, 5, 5, 5]):
         global ReconstructionLoss, ClsLoss, GeneratorLoss, DiscriminatorLoss, AllLoss
 
-        for iter in range(epoch-10):
+        for iter in range(epoch):
             index = np.array([x for x in range(self.trainLen)])
             shuffle(index)
-            gt = gt[index]
             '''
             for i in sn.keys():
                 sn[i] = sn[i][index]
@@ -360,7 +358,7 @@ class CPMNets():
             '''
             feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
             feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
-            feed_dict.update({self.gt: gt})
+            feed_dict.update({self.gt: gt[index]})
             feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
 
             # update the network
@@ -376,9 +374,9 @@ class CPMNets():
                 _, AllLoss = self.sess.run(
                     [self.train_op[2], self.loss[0]], feed_dict=feed_dict)
             # update gan
-            #for i in range(step[3]):
-            #    _, AllLoss = self.sess.run(
-            #        [self.train_op[3], self.loss[0]], feed_dict=feed_dict)
+            for i in range(step[3]):
+                _, AllLoss = self.sess.run(
+                    [self.train_op[3], self.loss[0]], feed_dict=feed_dict)
 
             # update the generator
             #for i in range(step[3]):
@@ -402,7 +400,7 @@ class CPMNets():
                         GeneratorLoss,
                         DiscriminatorLoss)
             print(output)
-
+        '''
         # tuning
         for iter in range(epoch-10, epoch):
             index = np.array([x for x in range(self.trainLen)])
@@ -437,7 +435,7 @@ class CPMNets():
                         GeneratorLoss,
                         DiscriminatorLoss)
             print(output)
-
+        '''
 
     def test(self, data, sn, gt, epoch):
         feed_dict = {self.input[str(v_num)]: data[str(v_num)] for v_num in range(self.view_num)}
