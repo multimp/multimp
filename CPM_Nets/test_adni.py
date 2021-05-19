@@ -100,6 +100,7 @@ if __name__ == "__main__":
                             args.lsd_dim,
                             learning_rate,
                             args.lamb)
+            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy(), epoch[0])
         elif args.model == 'CPMNets_num_ori':
             model = CPMNets_num_ori(view_num,
                                 allData.idx_record_both,
@@ -109,6 +110,7 @@ if __name__ == "__main__":
                                 args.lsd_dim,
                                 learning_rate,
                                 args.lamb)
+            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy(), epoch[0])
         elif args.model == 'CPMNets_num':
             model = CPMNets_num(view_num,
                                 allData.idx_record_both,
@@ -118,8 +120,10 @@ if __name__ == "__main__":
                                 args.lsd_dim,
                                 learning_rate,
                                 args.lamb)
+            a = allData.Sn_both.copy()
+            b = allData.data_both.copy()
+            model.train(b, a, allData.labels.copy(), epoch[0])
 
-            model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy(), epoch[0])
         #H_all = model.get_h_all()
         # get recovered matrix
 
