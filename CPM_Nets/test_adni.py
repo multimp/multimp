@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # set layer size
     layer_size = [[outdim_size[i]] for i in range(view_num)]
-    layer_size_d = [[outdim_size[i], 1] for i in range(view_num)]
+    layer_size_d = [[outdim_size[i], 128, 1] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]
     learning_rate = [0.001, 0.01]
@@ -162,6 +162,7 @@ if __name__ == "__main__":
         current_metrics['epoch'] = [int(args.epochs_train)]
         current_metrics['model'] = [args.model]
         current_metrics['multi_view'] = [MULTI_VIEW]
+        current_metrics['run_idx'] = [str(args.run_idx)]
 
         ## save to imputations
         #imputed_data = impute_missing_values_using_imputed_matrix(allData.data.copy(), imputed_data, allData.Sn)
@@ -182,7 +183,7 @@ if __name__ == "__main__":
         if os.path.exists(metrics_file):
             metrics = pd.read_csv(metrics_file, header=0)
             new_metrics = metrics.append(pd.DataFrame(current_metrics,
-                                                      columns=['missing_rate', 'acc', 'mse', 'epoch', 'model', 'multi_view'], index=[0]))
+                                                      columns=['missing_rate', 'acc', 'mse', 'epoch', 'model', 'multi_view', 'run_idx'], index=[0]))
             new_metrics.to_csv(metrics_file, index=None)
         else:
             pd.DataFrame.from_dict(current_metrics).to_csv(metrics_file, index=None)

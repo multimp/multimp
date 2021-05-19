@@ -5,6 +5,6 @@ for i in range(5):
         command = 'python test_adni.py ' \
                   '--model CPMNets_ori ' \
                   '--multi-view 0 ' \
-                  '--epochs-train 100 ' \
+                  '--epochs-train 30 ' \
                   '--missing-rate ' + str(im) + ' --run-idx ' + str(i)
         os.system(command)

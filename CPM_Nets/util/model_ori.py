@@ -45,7 +45,7 @@ class CPMNets_ori():
                 tf.compat.v1.placeholder(tf.float32, shape=[None, self.layer_size[v_num][-1]],
                                          name='output' + str(v_num))
         # ground truth
-        self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, ], name='gt')
+        self.gt = tf.compat.v1.placeholder(tf.int32, shape=[None, 1], name='gt')
         # bulid the model
         self.train_op, self.loss = self.bulid_model([self.h_train_update, ], learning_rate)
         # open session
@@ -125,7 +125,7 @@ class CPMNets_ori():
             #loss_from_numeric_vs = tf.reduce_sum(
                 #tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
                 #                                    2.0), ca_mask), self.sn[str(num)]), )
-            '''
+
             reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
@@ -136,7 +136,7 @@ class CPMNets_ori():
             loss_from_numeric_vs = tf.reduce_sum(
                 tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
                                                     2.0), self.sn[i_view]))
-
+            '''
             loss_regr += loss_from_numeric_vs
 
             # cls for categorical features
@@ -147,11 +147,18 @@ class CPMNets_ori():
                     reconst_cat_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
                     input_cat_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
                     sn_cat_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-
+                    '''
                     loss_from_cat_vs += tf.compat.v1.losses.softmax_cross_entropy(
                             logits=tf.boolean_mask(reconst_cat_i, sn_cat_i),
                             onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
                         reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
+                    '''
+                    probs = tf.boolean_mask(tf.compat.v1.math.softmax(reconst_cat_i, axis=1), sn_cat_i)
+                    cross_entropy = \
+                        tf.compat.v1.math.log(probs + 1e-3) * tf.boolean_mask(input_cat_i, sn_cat_i)
+
+                    loss_from_cat_vs -= tf.reduce_sum(cross_entropy)
+
                 loss_cls += loss_from_cat_vs
 
         return loss_regr, loss_cls
@@ -176,7 +183,31 @@ class CPMNets_ori():
     def train(self, data, sn, gt, epoch, step=[5, 5]):
         global Reconstruction_LOSS
 
-        for iter in range(epoch):
+        for iter in range(epoch-10):
+            index = np.array([x for x in range(self.trainLen)])
+            shuffle(index)
+            #gt = gt[index]
+            # for i in sn.keys():
+            #    sn[i] = sn[i][index]
+            feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
+            feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
+            feed_dict.update({self.gt: gt[index]})
+            feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
+            # update the h
+            for i in range(step[1]):
+                _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
+                    [self.train_op[1], self.loss[0], self.loss[1]], feed_dict=feed_dict)
+
+            # update the network
+            for i in range(step[0]):
+                _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
+                    [self.train_op[0], self.loss[0], self.loss[1]], feed_dict=feed_dict)
+
+            output = "Epoch : {:.0f}  ===> Reconstruction Loss = {:.4f}, Classification Loss = {:.4f} " \
+                .format((iter + 1), Reconstruction_LOSS, Classification_LOSS)
+            print(output)
+
+        for iter in range(epoch-10, epoch):
             index = np.array([x for x in range(self.trainLen)])
             shuffle(index)
             #gt = gt[index]
@@ -191,10 +222,7 @@ class CPMNets_ori():
             for i in range(step[0]):
                 _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
                     [self.train_op[0], self.loss[0], self.loss[1]], feed_dict=feed_dict)
-            # update the h
-            for i in range(step[1]):
-                _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
-                    [self.train_op[1], self.loss[0], self.loss[1]], feed_dict=feed_dict)
+
             output = "Epoch : {:.0f}  ===> Reconstruction Loss = {:.4f}, Classification Loss = {:.4f} " \
                 .format((iter + 1), Reconstruction_LOSS, Classification_LOSS)
             print(output)

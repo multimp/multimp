@@ -216,14 +216,16 @@ def Normalize(data):
 
     #m = np.mean(data, axis=0)
     #std = np.std(data, axis=0)
-    #m = np.mean(data)
-    #std = np.std(data)
+    m = np.mean(data)
+    std = np.std(data)
 
-    #return (data - m) / (std + 1e-3)
+    return (data - m) / (std + 1e-3)
 
-    scaler = MinMaxScaler(feature_range=(-1, 1))
-    data = scaler.fit_transform(data)
-    return data
+    #return data
+
+    #scaler = MinMaxScaler(feature_range=(-1, 1))
+    #data = scaler.fit_transform(data)
+    #return data
 
 
 def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):

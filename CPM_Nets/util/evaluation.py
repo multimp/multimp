@@ -90,18 +90,22 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
             ((imputed_nume[str(i_view)][sn_for_testing_nume[str(i_view)]] -
              original_nume[str(i_view)][sn_for_testing_nume[str(i_view)]])**2).sum()
     error_cat = []
+    error_size = []
     for i_view in range(int(view_num)):
         if cat_indicator[str(i_view)].sum() > 0:
-            for ith_col in range(original_cat[str(i_view)].shape[1]):
+            #for ith_col in range(original_cat[str(i_view)].shape[1]):
                 #catv = np.unique(original_cat[str(i_view)][:, ith_col])
                 #gt = np.zeros_like(original_cat[str(i_view)][:, ith_col])
                 #gt[original_cat[str(i_view)][:, ith_col] > catv.min()] = 1
-                gt = original_cat[str(i_view)][:, ith_col]
-                pred = imputed_cat[str(i_view)][:, ith_col]
-                try:
-                    error_cat.append(accuracy_score(gt,pred))
-                except:
-                    print(gt)
+            gt = original_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
+            pred = imputed_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
+            current_acc = (gt == pred).sum()
+            current_size = gt.shape[0]
+            try:
+                error_cat.append(current_acc)
+                error_size.append(current_size)
+            except:
+                print(gt)
 
     # evaluate original mean imputation
     error_nume_meanimp = {}
@@ -120,7 +124,7 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
         totoal_error_nume_meanimp += error_nume_meanimp[str(i_view)]
     mean_error_nume = (total_error_nume / num_of_values)**0.5
     mean_error_nume_meanimp = (totoal_error_nume_meanimp / num_of_values) ** 0.5
-    mean_acc = np.array(error_cat).mean()
+    mean_acc = np.array(error_cat).sum() / np.array(error_size).sum()
 
     print('Original MSE is {:.4f},'.format(mean_error_nume_meanimp))
 
