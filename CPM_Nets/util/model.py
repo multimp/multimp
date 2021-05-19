@@ -62,16 +62,17 @@ class CPMNets():
     def bulid_model(self, h_update, learning_rate):
         # initialize network
         net = dict()
+        self.current_decoder = dict()
         for v_num in range(self.view_num):
             net[str(v_num)] = self.Encoding_net(self.h_temp, v_num)
-            self.output[str(v_num)] = net[str(v_num)]
+            self.output[str(v_num)] = self.decoder_net(self.h_temp, v_num)
 
         # discriminator
         discriminator_net = dict()
         discriminator_labels = dict()
-        pred_gen = {}
-        gen_y = {}
+
         for v_num in range(self.view_num):
+            self.weight_d = self.initialize_weight_for_discr(self.layer_size_d[v_num])
             discriminator_net[str(v_num)], discriminator_labels[str(v_num)] = \
                 self.Discriminator_net(self.input[str(v_num)], net[str(v_num)], v_num)
             #pred_gen[str(v_num)], gen_y[str(v_num)] = \
@@ -146,16 +147,34 @@ class CPMNets():
 
     def Encoding_net(self, h, v):
         weight = self.initialize_weight(self.layer_size[v])
+
+        self.current_decoder[str(v)] = weight
+        #layer = tf.nn.relu(h)
         layer = tf.matmul(h, weight['w0']) + weight['b0']
         for num in range(1, len(self.layer_size[v])):
             layer = tf.nn.relu(layer)
             layer = tf.matmul(layer, weight['w' + str(num)]) + weight['b' + str(num)]
+        layer = tf.math.tanh(layer)
+        return layer
+
+    def decoder_net(self, h, v):
+        #layer = tf.nn.relu(h)
+        layer = tf.matmul(h, self.current_decoder[str(v)]['w0']) + self.current_decoder[str(v)]['b0']
+        for num in range(1, len(self.layer_size[v])):
+            layer = tf.nn.relu(layer)
+            layer = tf.matmul(layer, self.current_decoder[str(v)]['w' + str(num)]) + self.current_decoder[str(v)]['b' + str(num)]
+        layer = tf.math.tanh(layer)
         return layer
 
     def Discriminator_net(self, x_real, x_generated, v):
         # concate and suffle data
-        x_real = x_real * tf.cast(self.sn[str(v)], tf.float32) #+ x_generated * (1 -  tf.cast(self.sn[str(v)], tf.float32))
-        x_generated = x_generated * tf.cast(self.sn[str(v)], tf.float32)
+        x_real = tf.gather(x_real * tf.cast(self.sn[str(v)], tf.float32),
+                           indices=self.idx_record[str(v)]['value'],
+                           axis=1) #+ x_generated * (1 -  tf.cast(self.sn[str(v)], tf.float32))
+        x_generated = tf.gather(x_generated * tf.cast(self.sn[str(v)], tf.float32),
+                                indices=self.idx_record[str(v)]['value'],
+                                axis=1)
+
         x_feat = tf.concat((x_real, x_generated), axis=0)
 
         y = tf.cast(tf.concat((tf.ones_like(self.gt), tf.zeros_like(self.gt)), axis=0), tf.float32)
@@ -164,12 +183,12 @@ class CPMNets():
         #x_y = tf.random.shuffle(tf.concat((x_feat, tf.cast(y, tf.float32)), axis=1).eval())
         #x_feat = x_y[:, 0:-1]
         #y = tf.cast(x_y[:, -1], tf.bool)[:, None]
-        weight_d = self.initialize_weight_for_discr(self.layer_size_d[v])
-        layer_d = tf.matmul(x_feat, weight_d['w0']) + weight_d['b0']
+
+        layer_d = tf.matmul(x_feat, self.weight_d['w0']) + self.weight_d['b0']
         if len(self.layer_size_d[v]) >2:
             for num in range(1, len(self.layer_size_d[v])-1):
                 layer_d = tf.nn.relu(layer_d)
-                layer_d = tf.matmul(layer_d, weight_d['w' + str(num)]) + weight_d['b' + str(num)]
+                layer_d = tf.matmul(layer_d, self.weight_d['w' + str(num)]) + self.weight_d['b' + str(num)]
         return layer_d, y
     '''
     def Discriminator_net_for_gen(self, x_generated, v):
@@ -356,36 +375,42 @@ class CPMNets():
                 sn[i] = sn[i][index]
                 #data[i] = data[i][index]
             '''
-            feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
+            feed_dict = {self.input[str(v_num)]:
+                             data[str(v_num)][index] + np.random.normal(size=data[str(v_num)][index].shape)*0.01
+                         for v_num in range(self.view_num)}
             feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
             feed_dict.update({self.gt: gt[index]})
             feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
 
-            # update the network
-            for i in range(step[0]):
-                _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
-                    [self.train_op[0], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
+            # updata the discriminator
+            for i in range(step[4]):
+                _, DiscriminatorLoss = self.sess.run(
+                    [self.train_op[4], self.loss[4]], feed_dict=feed_dict)
+
             # update gan
             for i in range(step[1]):
                 _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
                     [self.train_op[1], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
-            # update the h
-            for i in range(step[2]):
-                _, AllLoss = self.sess.run(
-                    [self.train_op[2], self.loss[0]], feed_dict=feed_dict)
             # update gan
             for i in range(step[3]):
                 _, AllLoss = self.sess.run(
                     [self.train_op[3], self.loss[0]], feed_dict=feed_dict)
 
+            # update the network
+            for i in range(step[0]):
+                _, ReconstructionLoss, ClsLoss, GeneratorLoss = self.sess.run(
+                    [self.train_op[0], self.loss[5], self.loss[6], self.loss[3]], feed_dict=feed_dict)
+
+            # update the h
+            for i in range(step[2]):
+                _, AllLoss = self.sess.run(
+                    [self.train_op[2], self.loss[0]], feed_dict=feed_dict)
+
             # update the generator
             #for i in range(step[3]):
             #    _, GeneratorLOSS = self.sess.run(
             #        [self.train_op[3], self.loss[3]], feed_dict=feed_dict)
-            # updata the discriminator
-            for i in range(step[4]):
-                _, DiscriminatorLoss = self.sess.run(
-                    [self.train_op[4], self.loss[4]], feed_dict=feed_dict)
+
 
             output = "Epoch : {:.0f}  ===> " \
                      "All Loss = {:.4f}, " \

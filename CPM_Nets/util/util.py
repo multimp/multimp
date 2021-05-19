@@ -62,6 +62,8 @@ class DataSet(object):
 
         # merging multi-view data to one view
         else:
+            for ik in cat_indicator.keys():
+                cat_indicator[ik] = cat_indicator[ik].astype('bool')
 
             self.cat_indicator = {}
             for iv in range(int(view_number)):
@@ -91,8 +93,8 @@ class DataSet(object):
                         Normalize(data[0][:, np.logical_not(cat_indicator[str(v_num)])])
                 else:
                     current_view = data[v_num].copy()
-                    current_view[:, np.logical_not(self.cat_indicator[str(v_num)])] = \
-                        Normalize(data[v_num][:, np.logical_not(self.cat_indicator[str(v_num)])])
+                    current_view[:, np.logical_not(cat_indicator[str(v_num)])] = \
+                        Normalize(data[v_num][:, np.logical_not(cat_indicator[str(v_num)])])
                     self.data['0'] = \
                         np.concatenate((self.data['0'], current_view), axis=1)
 
@@ -105,16 +107,16 @@ class DataSet(object):
             # self.record_view_size = \
             self.data_both, self.Sn_both, self.idx_record_both, self.data, self.Sn, self.MX = \
                 self.transform_to_binaries(self.data, self.Sn, self.cat_indicator, self.MX)
-            '''
+
             for v_num in self.data_both.keys():
-                self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']] = \
-                    Normalize(self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']])
+                #self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']] = \
+                #    Normalize(self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']])
                 self.data_both[str(v_num)] = \
                     self.data_both[str(v_num)] * self.Sn_both[str(v_num)].astype('float')
-                self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])] = \
-                    Normalize(self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])])
+                #self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])] = \
+                #    Normalize(self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])])
                     
-            '''
+
 
     @property
     def labels(self):
@@ -248,16 +250,16 @@ def Normalize(data):
 
     #m = np.mean(data, axis=0)
     #std = np.std(data, axis=0)
-    m = np.mean(data)
-    std = np.std(data)
+    #m = np.mean(data)
+    #std = np.std(data)
 
-    return (data - m) / (std + 1e-3)
+    #return (data - m) / (std + 1e-3)
 
     #return data
 
-    #scaler = MinMaxScaler(feature_range=(-1, 1))
-    #data = scaler.fit_transform(data)
-    #return data
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    data = scaler.fit_transform(data)
+    return data
 
 
 def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):

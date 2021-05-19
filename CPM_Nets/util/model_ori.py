@@ -56,9 +56,10 @@ class CPMNets_ori():
     def bulid_model(self, h_update, learning_rate):
         # initialize network
         net = dict()
+        self.current_decoder = dict()
         for v_num in range(self.view_num):
             net[str(v_num)] = self.Encoding_net(self.h_temp, v_num)
-            self.output[str(v_num)] = net[str(v_num)]
+            self.output[str(v_num)] = self.decoder_net(self.h_temp, v_num)
         # calculate reconstruction loss
         reco_regr_loss, reco_cls_loss = self.reconstruction_loss(net)
         # calculate classification loss
@@ -89,9 +90,23 @@ class CPMNets_ori():
 
     def Encoding_net(self, h, v):
         weight = self.initialize_weight(self.layer_size[v])
+
+        self.current_decoder[str(v)] = weight
+        #layer = tf.nn.relu(h)
         layer = tf.matmul(h, weight['w0']) + weight['b0']
         for num in range(1, len(self.layer_size[v])):
+            layer = tf.nn.relu(layer)
             layer = tf.matmul(layer, weight['w' + str(num)]) + weight['b' + str(num)]
+        layer = tf.math.tanh(layer)
+        return layer
+
+    def decoder_net(self, h, v):
+        #layer = tf.nn.relu(h)
+        layer = tf.matmul(h, self.current_decoder[str(v)]['w0']) + self.current_decoder[str(v)]['b0']
+        for num in range(1, len(self.layer_size[v])):
+            layer = tf.nn.relu(layer)
+            layer = tf.matmul(layer, self.current_decoder[str(v)]['w' + str(num)]) + self.current_decoder[str(v)]['b' + str(num)]
+        layer = tf.math.tanh(layer)
         return layer
 
     def initialize_weight(self, dims_net):
@@ -189,19 +204,22 @@ class CPMNets_ori():
             #gt = gt[index]
             # for i in sn.keys():
             #    sn[i] = sn[i][index]
-            feed_dict = {self.input[str(v_num)]: data[str(v_num)][index] for v_num in range(self.view_num)}
+            feed_dict = {self.input[str(v_num)]:
+                             data[str(v_num)][index] + np.random.normal(size=data[str(v_num)][index].shape)*0.01
+                         for v_num in range(self.view_num)}
             feed_dict.update({self.sn[str(i)]: sn[str(i)][index] for i in range(self.view_num)})
             feed_dict.update({self.gt: gt[index]})
             feed_dict.update({self.h_index: index.reshape((self.trainLen, 1))})
-            # update the h
-            for i in range(step[1]):
-                _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
-                    [self.train_op[1], self.loss[0], self.loss[1]], feed_dict=feed_dict)
 
             # update the network
             for i in range(step[0]):
                 _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
                     [self.train_op[0], self.loss[0], self.loss[1]], feed_dict=feed_dict)
+
+            # update the h
+            for i in range(step[1]):
+                _, Reconstruction_LOSS, Classification_LOSS = self.sess.run(
+                    [self.train_op[1], self.loss[0], self.loss[1]], feed_dict=feed_dict)
 
             output = "Epoch : {:.0f}  ===> Reconstruction Loss = {:.4f}, Classification Loss = {:.4f} " \
                 .format((iter + 1), Reconstruction_LOSS, Classification_LOSS)

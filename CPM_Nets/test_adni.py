@@ -14,13 +14,13 @@ import pickle5 as pickle
 from util.model_ori import CPMNets_ori
 
 warnings.filterwarnings("ignore")
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+
 #np.random.seed(0)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets',
+    parser.add_argument('--model', type=str, default='CPMNets_ori',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
@@ -68,8 +68,8 @@ if __name__ == "__main__":
     outdim_size = [allData.data_both[str(i)].shape[1] for i in range(view_num)]
 
     # set layer size
-    layer_size = [[128, outdim_size[i]] for i in range(view_num)]
-    layer_size_d = [[outdim_size[i], 128, 1] for i in range(view_num)]
+    layer_size = [[outdim_size[i]] for i in range(view_num)]
+    layer_size_d = [[np.logical_not(allData.cat_indicator[str(i)]).sum(), 1] for i in range(view_num)]
     # set parameter
     epoch = [args.epochs_train, args.epochs_test]
     learning_rate = [0.001, 0.01]
