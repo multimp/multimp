@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets_ori',
+    parser.add_argument('--model', type=str, default='CPMNets',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
