@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets',
+    parser.add_argument('--model', type=str, default='CPMNets_num',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
@@ -113,13 +113,13 @@ if __name__ == "__main__":
             model.train(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy(), epoch[0])
         elif args.model == 'CPMNets_num':
             model = CPMNets_num(view_num,
-                                allData.idx_record_both,
-                                allData.num_examples,
-                                testData.num_examples,
-                                layer_size,
-                                args.lsd_dim,
-                                learning_rate,
-                                args.lamb)
+                            allData.idx_record_both,
+                            allData.num_examples,
+                            testData.num_examples,
+                            layer_size, layer_size_d,
+                            args.lsd_dim,
+                            learning_rate,
+                            args.lamb)
             a = allData.Sn_both.copy()
             b = allData.data_both.copy()
             model.train(b, a, allData.labels.copy(), epoch[0])
