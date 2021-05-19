@@ -9,7 +9,7 @@ tf.compat.v1.disable_eager_execution()
 from sklearn.metrics import roc_auc_score
 
 
-class CPMNets():
+class CPMNets_num():
     """build model
     """
 
@@ -241,7 +241,7 @@ class CPMNets():
             # loss_from_numeric_vs = tf.reduce_sum(
             # tf.boolean_mask(tf.multiply(tf.pow(tf.subtract(net[str(num)], self.input[str(num)]),
             #                                    2.0), ca_mask), self.sn[str(num)]), )
-
+            '''
             reconst_val_i = tf.gather(net[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             input_val_i = tf.gather(self.input[i_view], indices=self.idx_record[i_view]['value'], axis=1)
             sn_val_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['value'], axis=1)
@@ -252,9 +252,9 @@ class CPMNets():
             loss_from_numeric_vs = tf.reduce_sum(
                 tf.boolean_mask(tf.pow(tf.subtract(net[i_view], self.input[i_view]),
                                                     2.0), self.sn[i_view]))
-            '''
-            loss_regr += loss_from_numeric_vs
 
+            loss_regr += loss_from_numeric_vs
+            '''
             # cls for categorical features
             if len(self.idx_record[i_view]['cat']) > 0:
                 loss_from_cat_vs = 0.0
@@ -264,19 +264,12 @@ class CPMNets():
                         tf.gather(self.input[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1),
                         tf.float32)
                     sn_cat_i = tf.gather(self.sn[i_view], indices=self.idx_record[i_view]['cat'][ith_cat], axis=1)
-                    '''
-                    loss_from_cat_vs += tf.compat.v1.losses.softmax_cross_entropy(
-                            logits=tf.boolean_mask(reconst_cat_i, sn_cat_i),
-                            onehot_labels=tf.boolean_mask(input_cat_i, sn_cat_i),
-                            reduction=tf.compat.v1.losses.Reduction.MEAN)
-                        #reduction=tf.compat.v1.losses.Reduction.SUM_BY_NONZERO_WEIGHTS)
-                    '''
                     probs = tf.boolean_mask(tf.compat.v1.math.softmax(reconst_cat_i, axis=1), sn_cat_i)
                     cross_entropy = \
                         tf.compat.v1.math.log(probs + 1e-3) * tf.boolean_mask(input_cat_i, sn_cat_i)
                     loss_from_cat_vs -= tf.reduce_sum(cross_entropy)
                 loss_cls += loss_from_cat_vs
-
+            '''
         return loss_regr, loss_cls
 
     '''

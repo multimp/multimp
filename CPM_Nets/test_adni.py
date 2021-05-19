@@ -12,7 +12,8 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import pickle5 as pickle
 from util.model_ori import CPMNets_ori
-
+from util.model_nume import CPMNets_num
+from util.model_nume_ori import CPMNets_num_ori
 warnings.filterwarnings("ignore")
 
 #np.random.seed(0)
