@@ -284,8 +284,8 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):
     X_train = []
     X_test = []
     X_all = []
-    #if min(data['gt']) == 0:
-    #    labels = data['gt'] + 1
+    #if min(data['gt']) == 1:
+    #    labels = data['gt'] - 1
     #else:
     #    labels = data['gt']
     #labels = labels.squeeze()

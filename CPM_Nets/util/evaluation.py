@@ -23,7 +23,7 @@ def Normalize(data):
     #std = np.std(data)
     return (data - m) / (std + 1e-3)
 
-def transform_format(data_both, idx_record):
+def transform_format(data_both, idx_record, min_label):
     data= dict()
     data_cat = dict()
     for i_view in data_both.keys():
@@ -35,7 +35,7 @@ def transform_format(data_both, idx_record):
                 #current_cat[current_cat < current_cat.max()] = 0
                 #ohe = OneHotEncoder()
                 #current_cat = ohe.inverse_transform(current_cat)
-                current_cat = np.argmax(current_cat, axis=1)
+                current_cat = np.argmax(current_cat, axis=1) + min_label
                 data[i_view] = np.concatenate((data[i_view], current_cat[:, None]), axis=1)
     return data
 
@@ -99,6 +99,7 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
                 #gt[original_cat[str(i_view)][:, ith_col] > catv.min()] = 1
             gt = original_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
             pred = imputed_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
+
             current_acc = (gt == pred).sum()
             current_size = gt.shape[0]
             try:

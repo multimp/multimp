@@ -92,7 +92,7 @@ class CPMNets_num():
 
         generator_loss = self.generator_loss(discriminator_net, discriminator_labels, label_smoothing=0)
 
-        recons_loss = tf.add(reco_loss_regre, reco_loss_cls)
+        recons_loss = reco_loss_regre #tf.add(reco_loss_regre, reco_loss_cls)
         gan_loss = tf.add(discriminator_loss, generator_loss)
         all_loss = tf.add(recons_loss, gan_loss)
 
@@ -129,7 +129,7 @@ class CPMNets_num():
                 train_discriminator_op], \
                [all_loss, recons_loss, gan_loss,
                 generator_loss, discriminator_loss,
-                reco_loss_regre, reco_loss_cls]
+                reco_loss_regre, reco_loss_regre]
 
         # return [train_net_op], \
         #       [reco_loss_regre]

@@ -64,7 +64,8 @@ class CPMNets_num_ori():
         reco_regr_loss, reco_cls_loss = self.reconstruction_loss(net)
         # calculate classification loss
         #class_loss = self.classification_loss()
-        all_loss = tf.add(reco_regr_loss, reco_cls_loss)
+        #all_loss = tf.add(reco_regr_loss, reco_cls_loss)
+        all_loss = reco_regr_loss
         # train net operator
         # train the network to minimize reconstruction loss
         train_net_op = tf.compat.v1.train.AdamOptimizer(learning_rate[0]) \

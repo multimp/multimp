@@ -21,11 +21,11 @@ warnings.filterwarnings("ignore")
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CPMNets_num',
+    parser.add_argument('--model', type=str, default='CPMNets_ori',
                         help='CPMNets, CPMNets_ori')
     parser.add_argument('--lsd-dim', type=int, default=128,
                         help='dimensionality of the latent space data [default: 512]')
-    parser.add_argument('--epochs-train', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs-train', type=int, default=20, metavar='N',
                         help='number of epochs to train [default: 20]')
     parser.add_argument('--epochs-test', type=int, default=1, metavar='N',
                         help='number of epochs to test [default: 50]')
@@ -37,7 +37,7 @@ if __name__ == "__main__":
                         help='saving path')
     parser.add_argument('--unsu', type=bool, default=True,
                         help='view missing rate [default: 0]')
-    parser.add_argument('--multi-view', type=int, default=0,
+    parser.add_argument('--multi-view', type=int, default=1,
                         help='whether to use multiview learning')
     parser.add_argument('--run-idx', type=int, default=0,
                         help='number of run')
@@ -48,14 +48,14 @@ if __name__ == "__main__":
     print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(MULTI_VIEW) + '.')
     # read data
     if args.unsu:
-        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
+        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/TCGA-GBM_cate2.pkl',
                                                            Normal=1,
                                                            multi_view=MULTI_VIEW,
                                                            missing_rate=args.missing_rate)
         # Randomly generated missing matrix
 
     else:
-        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
+        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/TCGA-GBM_cate2.pkl',
                                                   ratio=0.8, Normal=1, multi_view=MULTI_VIEW,
                                                   missing_rate=args.missing_rate)
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         # get recovered matrix
 
         imputed_data = model.recover(allData.data_both.copy(), allData.Sn_both.copy(), allData.labels.copy())
-        imputed_data = transform_format(imputed_data, allData.idx_record_both)
+        imputed_data = transform_format(imputed_data, allData.idx_record_both, allData.labels.min())
         imputed_data = impute_missing_values_using_imputed_matrix(allData.data.copy(), imputed_data.copy(), allData.Sn)
         latent_vectors = model.get_h_all()
         # evaluete method
