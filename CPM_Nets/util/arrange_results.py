@@ -15,12 +15,12 @@ missing_rates = [0.1, 0.2, 0.3, 0.4, 0.5]
 multi_view = [True, False]
 models = ['CPMNets_num', 'CPMNets_num_ori', 'CPMNets', 'CPMNets_ori',]# ['CPMNets_num', 'CPMNets_num_ori']
 metrics = ['mse', 'acc']
-name_transformer = {'CPMNets': 'Multimp/CELoss/GAN/',
-                    'CPMNets_ori': 'Multimp/CELoss/no GAN/',
+name_transformer = {'CPMNets': 'MultImp/CELoss/GAN/',
+                    'CPMNets_ori': 'MultImp/CELoss/no GAN/',
                     True: 'multi_view',
                     False:'single_view',
-                    'CPMNets_num': 'Multimp/no CELoss/GAN/',
-                    'CPMNets_num_ori': 'Multimp/no CELoss/no GAN/',
+                    'CPMNets_num': 'MultImp/no CELoss/GAN/',
+                    'CPMNets_num_ori': 'MultImp/no CELoss/no GAN/',
                     }
 models_with_mv = []
 for i_model in models:
