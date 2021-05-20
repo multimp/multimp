@@ -4,8 +4,8 @@ missing_rate = [0.1, 0.2, 0.3, 0.4, 0.5]
 for i in range(5):
     for im in missing_rate:
         command = 'python test_GBMLGG.py ' \
-                  '--model CPMNets_ori  ' \
-                  '--multi-view 1 ' \
+                  '--model CPMNets_ori ' \
+                  '--multi-view 0 ' \
                   '--epochs-train 20 ' \
                   '--epochs-test 20 ' \
                   '--missing-rate ' + str(im) + ' --run-idx ' + str(i)
