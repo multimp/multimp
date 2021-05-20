@@ -15,12 +15,12 @@ missing_rates = [0.1, 0.2, 0.3, 0.4, 0.5]
 multi_view = [True, False]
 models = ['CPMNets_num', 'CPMNets_num_ori', 'CPMNets', 'CPMNets_ori',]# ['CPMNets_num', 'CPMNets_num_ori']
 metrics = ['mse', 'acc']
-name_transformer = {'CPMNets': 'CPMNets/CELoss/GAN/',
-                    'CPMNets_ori': 'CPMNets/CELoss/no GAN/',
+name_transformer = {'CPMNets': 'Multimp/CELoss/GAN/',
+                    'CPMNets_ori': 'Multimp/CELoss/no GAN/',
                     True: 'multi_view',
                     False:'single_view',
-                    'CPMNets_num': 'CPMNets/no CELoss/GAN/',
-                    'CPMNets_num_ori': 'CPMNets/no CELoss/no GAN/',
+                    'CPMNets_num': 'Multimp/no CELoss/GAN/',
+                    'CPMNets_num_ori': 'Multimp/no CELoss/no GAN/',
                     }
 models_with_mv = []
 for i_model in models:
@@ -38,7 +38,7 @@ for i_model in models:
             current_results_2 = current_results_1[current_results_1['missing_rate']==i_missing_rate]
             for i_rd in run_idx:
                 current_results_3 = current_results_2[current_results_2['run_idx']==i_rd]
-                if len(current_results_3) >2:
+                if len(current_results_3) >1:
                     print('More than 1 result for the same setting')
                 current_rmses.append(current_results_3['mse'].values[-1])
                 current_accs.append(current_results_3['acc'].values[-1])
@@ -91,7 +91,7 @@ def RMSE_plot(which, savename_rmse):
     for i in which:
         model_list.append(models_with_mv[i])
 
-    plt.figure()
+    plt.figure(dpi=500)
 
     ax = plt.gca()
     #ax.set_xlim(0, 402)
@@ -132,7 +132,7 @@ def ACC_plot(which, savename_acc):
     for i in which:
         model_list.append(models_with_mv[i])
 
-    plt.figure()
+    plt.figure(dpi=500)
 
     ax = plt.gca()
     #ax.set_xlim(0, 402)
@@ -165,17 +165,17 @@ def ACC_plot(which, savename_acc):
     plt.show()
 
 # overall
-RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_CELoss.png')
-RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_no_CELoss.png')
-ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_CELoss.png')
-ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_no_CELoss.png')
+RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss.png')
+RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss.png')
+ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss.png')
+ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss.png')
 # sub
-RMSE_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_compare_1.png')
-RMSE_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_compare_2.png')
-RMSE_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_compare_3.png')
-RMSE_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_rmse_compare_4.png')
+RMSE_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_1.png')
+RMSE_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_2.png')
+RMSE_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_3.png')
+RMSE_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_4.png')
 
-ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_compare_1.png')
-ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_compare_2.png')
-ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_compare_3.png')
-ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni_acc_compare_4.png')
+ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_1.png')
+ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_2.png')
+ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_3.png')
+ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_4.png')
