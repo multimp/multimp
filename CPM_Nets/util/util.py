@@ -360,3 +360,85 @@ def impute_missing_values_using_imputed_matrix(originaldata, imputation, sn):
         imputed[ith_view] = originaldata[ith_view] * sn[ith_view].astype('float') + \
                             imputation[ith_view] * np.logical_not(sn[ith_view]).astype('float')
     return imputed
+
+def read_data_for_downstreams(str_name, imputed_str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):
+    """read data and spilt it train set and test set evenly
+    :param str_name:path and dataname
+    :param ratio:training set ratio
+    :param Normal:do you want normalize
+    :return:dataset and view number
+    """
+    with open(str_name, 'rb') as handle:
+        data = pickle.load(handle)
+    with open(imputed_str_name, 'rb') as handle:
+        imputed_data = pickle.load(handle)
+    view_number = len(data['X'])
+    X = dict()
+    cat_indicator = dict()
+    for i in range(view_number):
+        X[i] = []
+        for ith_sub in range(data['X'].shape[1]):
+            X[i].append(np.array(data['X'][i][ith_sub], dtype=float))
+        X[i] = np.array(X[i])
+        cat_indicator[str(i)] = np.array(data['CatogoricalIndicator'][i]).astype(dtype='bool')
+    # train test spilt
+    X_train = []
+    X_test = []
+    X_all = []
+    #if min(data['gt']) == 1:
+    #    labels = data['gt'] - 1
+    #else:
+    #    labels = data['gt']
+    #labels = labels.squeeze()
+    labels = data['gt']
+    if ratio is None:
+        train_idx, test_idx, labels_train,  labels_test = \
+            train_test_split(np.arange(len(labels)),
+                             labels,
+                             train_size=ratio,
+                             random_state=0,
+                             stratify=labels)
+
+        for v_num in range(view_number):
+            X_train.append(X[v_num][train_idx])
+            X_test.append(X[v_num][test_idx])
+            X_all.append(X[v_num])
+
+        '''
+        if (Normal == 1):
+            for v_num in range(view_number):
+                X_train[v_num] = Normalize(X_train[v_num])
+                X_test[v_num] = Normalize(X_test[v_num])
+        '''
+        alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
+        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
+        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
+        if multi_view:
+            return alldata, traindata, testdata, view_number
+        else:
+            return alldata, traindata, testdata, 1
+    else:
+        train_idx, test_idx, labels_train,  labels_test = \
+            train_test_split(np.arange(len(labels)),
+                             labels,
+                             train_size=ratio,
+                             random_state=0,
+                             stratify=labels)
+
+        for v_num in range(view_number):
+            X_train.append(X[v_num][train_idx])
+            X_test.append(X[v_num][test_idx])
+
+        '''
+        if (Normal == 1):
+            for v_num in range(view_number):
+                X_train[v_num] = Normalize(X_train[v_num])
+                X_test[v_num] = Normalize(X_test[v_num])
+        '''
+
+        traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view)
+        testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view)
+        if multi_view:
+            return traindata, testdata, view_number
+        else:
+            return traindata, testdata, 1

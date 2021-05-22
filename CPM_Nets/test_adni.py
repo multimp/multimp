@@ -48,14 +48,14 @@ if __name__ == "__main__":
     print('We are training ' + args.model + ', missing rate is ' + str(args.missing_rate) + ' for multiview ' + str(MULTI_VIEW) + '.')
     # read data
     if args.unsu:
-        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/TCGA-GBM_cate2.pkl',
+        allData, trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
                                                            Normal=1,
                                                            multi_view=MULTI_VIEW,
                                                            missing_rate=args.missing_rate)
         # Randomly generated missing matrix
 
     else:
-        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/TCGA-GBM_cate2.pkl',
+        trainData, testData, view_num = read_data('/playpen-raid/data/oct_yining/multimp/data/adni_tabular_v2.pkl',
                                                   ratio=0.8, Normal=1, multi_view=MULTI_VIEW,
                                                   missing_rate=args.missing_rate)
 

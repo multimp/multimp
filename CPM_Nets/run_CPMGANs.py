@@ -9,3 +9,5 @@ for i in range(5):
                   '--epochs-train 30 ' \
                   '--missing-rate ' + str(im) + ' --run-idx ' + str(i)
         os.system(command)
+
+

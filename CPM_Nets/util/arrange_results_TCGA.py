@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-path_result_ADNI_ours = 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/results.csv'
-#savedir_rmse = 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/adni_mse_no_CELoss.png'
-#savedir_acc = 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/adni_acc_no_CELoss.png'
+path_result_ADNI_ours = 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/results_TCGA.csv'
 
 # 1. read pickle
 df_results = pd.read_csv(path_result_ADNI_ours)
@@ -51,7 +49,7 @@ for i_model in models:
 # 2. read comparisons
 path_result_ADNI_ours = 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/rmse_acc_all.csv'
 df_results_comparisons = pd.read_csv(path_result_ADNI_ours)
-df_results_comparisons = df_results_comparisons[df_results_comparisons['data']=='ADNI']
+df_results_comparisons = df_results_comparisons[df_results_comparisons['data']=='TCGA']
 
 models_com = ['Mean', 'KNN', 'MatrixFactorization']
 for i_model in models_com:
@@ -157,7 +155,7 @@ def ACC_plot(which, savename_acc):
 
     plt.title("Accracy of Impution for Missing Categorical Features")
     plt.xlabel("Missing Rate")
-    plt.ylabel("Accracy")
+    plt.ylabel("Accracy of Impution for Missing Categorical Features")
     plt.legend()
     plt.grid(False)
     plt.xticks(X_axis)
@@ -165,32 +163,31 @@ def ACC_plot(which, savename_acc):
     plt.show()
 
 # overall
-RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss.png')
-RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss.png')
-ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss.png')
-ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss.png')
+RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_no_CELoss.png')
+RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_CELoss.png')
+ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_no_CELoss.png')
+ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_CELoss.png')
 
-RMSE_plot([0, 1, 2, 3],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss_1234.png')
-RMSE_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss_1234.png')
-ACC_plot([0, 1, 2, 3], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss_1234.png')
-ACC_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss_1234.png')
+RMSE_plot([0, 1, 2, 3],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_no_CELoss_1234.png')
+RMSE_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_CELoss_1234.png')
+ACC_plot([0, 1, 2, 3], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_no_CELoss_1234.png')
+ACC_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_CELoss_1234.png')
 
-
-RMSE_plot(range(11),  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_all.png')
-ACC_plot(range(11), 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_all.png')
+RMSE_plot(range(11),  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_all.png')
+ACC_plot(range(11), 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_all.png')
 
 # sub
-RMSE_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_1.png')
-RMSE_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_2.png')
-RMSE_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_3.png')
-RMSE_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_4.png')
+RMSE_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_1.png')
+RMSE_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_2.png')
+RMSE_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_3.png')
+RMSE_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_4.png')
 
-ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_1.png')
-ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_2.png')
-ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_3.png')
-ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_4.png')
+ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_1.png')
+ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_2.png')
+ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_3.png')
+ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_4.png')
 
-RMSE_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_merge_1.png')
-RMSE_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_compare_merge_2.png')
-ACC_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_merge_1.png')
-ACC_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_compare_merge_2.png')
+RMSE_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_merge_1.png')
+RMSE_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_rmse_compare_merge_2.png')
+ACC_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_merge_1.png')
+ACC_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/tcga/tcga_acc_compare_merge_2.png')
