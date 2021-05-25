@@ -2,7 +2,6 @@ import scipy.io as sio
 import numpy as np
 import math
 from numpy.random import shuffle
-import tensorflow as tf
 import pickle5 as pickle
 from sklearn.model_selection import train_test_split
 

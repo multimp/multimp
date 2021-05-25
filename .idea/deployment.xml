@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="jyn@biag-lambda1.cs.unc.edu:22 password">
+  <component name="PublishConfigData" serverName="gpu3 (1)">
     <serverData>
+      <paths name="gpu3 (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="multimp" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jyn@biag-gpu0.cs.unc.edu:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="jyn@biag-gpu1.cs.unc.edu:22">
         <serverdata>
           <mappings>
@@ -9,10 +23,24 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="jyn@biag-lambda1.cs.unc.edu:22 password">
+      <paths name="jyn@biag-gpu3.cs.unc.edu:22 password">
         <serverdata>
           <mappings>
-            <mapping deploy="multimp" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jyn@biag-lambda1.cs.unc.edu:22 (1)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jyn@biag-lambda2.cs.unc.edu:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

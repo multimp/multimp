@@ -13,7 +13,7 @@ run_idx = [0, 1, 2, 3, 4]
 #missing_rates = ['0', '0.1','0.2', '0.3', '0.4', '0.5']
 missing_rates = [0.1, 0.2, 0.3, 0.4, 0.5]
 multi_view = [True, False]
-models = ['CPMNets_num', 'CPMNets_num_ori', 'CPMNets', 'CPMNets_ori',]# ['CPMNets_num', 'CPMNets_num_ori']
+models = [ 'CPMNets', 'CPMNets_ori', 'CPMNets_num', 'CPMNets_num_ori',]# ['CPMNets_num', 'CPMNets_num_ori']
 metrics = ['mse', 'acc']
 name_transformer = {'CPMNets': 'MultImp/CELoss/GAN/',
                     'CPMNets_ori': 'MultImp/CELoss/no GAN/',
@@ -165,15 +165,15 @@ def ACC_plot(which, savename_acc):
     plt.show()
 
 # overall
-RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss.png')
-RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss.png')
-ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss.png')
-ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss.png')
+RMSE_plot([0, 1, 2, 3, 8, 9, 10],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss.png')
+RMSE_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss.png')
+ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss.png')
+ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss.png')
 
-RMSE_plot([0, 1, 2, 3],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss_1234.png')
-RMSE_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss_1234.png')
-ACC_plot([0, 1, 2, 3], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss_1234.png')
-ACC_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss_1234.png')
+RMSE_plot([0, 1, 2, 3],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_CELoss_1234.png')
+RMSE_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_no_CELoss_1234.png')
+ACC_plot([0, 1, 2, 3], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss_1234.png')
+ACC_plot([4, 5, 6, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss_1234.png')
 
 
 RMSE_plot(range(11),  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_rmse_all.png')
