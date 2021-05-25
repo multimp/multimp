@@ -119,9 +119,9 @@ def ACC_plot(which, savename_acc):
         ax.plot(X_axis, np.array(mean_list), color=color,
                 alpha=1, label=name_transformer[i_model_with_mv])
 
-    plt.title("Accracy of Downtream Classification Task")
+    plt.title("Accuracy of Downtream Classification Task")
     plt.xlabel("Missing Rate")
-    plt.ylabel("Accracy")
+    plt.ylabel("Accuracy")
     plt.legend()
     plt.grid(False)
     plt.xticks(X_axis)
@@ -129,16 +129,13 @@ def ACC_plot(which, savename_acc):
     #plt.show()
 
 # overall
-ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_no_CELoss.png')
-ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_acc_CELoss.png')
-
 ACC_plot([0, 1, 2, 3, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_CELoss_1234.png')
 ACC_plot([4, 5, 6, 7, 8, 9, 10], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_no_CELoss_1234.png')
 
-#ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_1.png')
-#ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_2.png')
-#ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_3.png')
-#ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_4.png')
+ACC_plot([0, 4],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_1.png')
+ACC_plot([1, 5], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_2.png')
+ACC_plot([2, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_3.png')
+ACC_plot([3, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_4.png')
 
-#ACC_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_merge_1.png')
-#ACC_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_merge_2.png')
+ACC_plot([0, 2, 4, 6],  'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_merge_1.png')
+ACC_plot([1, 3, 5, 7], 'E:/UNC-CS-Course/COMP 790-166/project/results/metrics/plots/adni/adni_downstream_compare_merge_2.png')

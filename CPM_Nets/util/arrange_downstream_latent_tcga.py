@@ -129,9 +129,9 @@ def ACC_plot(which, savename_acc):
         ax.plot(X_axis, np.array(mean_list), color=color,
                 alpha=1, label=name_transformer[i_model_with_mv])
 
-    plt.title("Accracy of Downtream Classification Task")
+    plt.title("Accuracy of Downtream Classification Task")
     plt.xlabel("Missing Rate")
-    plt.ylabel("Accracy")
+    plt.ylabel("Accuracy")
     plt.legend()
     plt.grid(False)
     plt.xticks(X_axis)
