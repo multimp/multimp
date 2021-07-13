@@ -1,4 +1,4 @@
-## MultImp: MultImp: Multiomics Generative Models for Data Imputation
+## MultImp: Multiomics Generative Models for Data Imputation
 
 
 #### Reference
