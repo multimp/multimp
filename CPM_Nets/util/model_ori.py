@@ -1,4 +1,3 @@
-import util.classfiy as classfiy
 import tensorflow as tf
 import numpy as np
 from numpy.random import shuffle

@@ -2,8 +2,6 @@ import numpy as np
 from util.util import read_data, impute_missing_values_using_imputed_matrix
 from util.get_sn import get_sn
 from util.model import CPMNets
-
-import util.classfiy as classfiy
 from sklearn.metrics import accuracy_score
 import os
 import warnings

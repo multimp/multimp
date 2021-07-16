@@ -1,4 +1,4 @@
-import util.classfiy as classfiy
+
 import tensorflow as tf
 import numpy as np
 from numpy.random import shuffle
@@ -6,8 +6,6 @@ from util.util import xavier_init
 
 tf.compat.v1.disable_eager_execution()
 # tf.compat.v1.enable_eager_execution()
-from sklearn.metrics import roc_auc_score
-
 
 class CPMNets_num():
     """build model
