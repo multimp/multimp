@@ -25,14 +25,7 @@ class DataSet(object):
 
         # processing multi_view
         if multi_view:
-            '''
-            if cat_indicator is None:
-                self.cat_indicator = dict()
-                for iv in range(int(view_number)):
-                    self.cat_indicator[str(iv)] = np.zeros(data[iv].shape[1]).astype('int')
-            else:
-                self.cat_indicator = cat_indicator
-            '''
+
 
             self.cat_indicator = cat_indicator
 
@@ -99,22 +92,13 @@ class DataSet(object):
 
             # generate missing values
             self.Sn = self.get_sn()
-            # self.value_data, \
-            # self.cat_data, \
-            # self.value_Sn, \
-            # self.cat_MX, \
-            # self.record_view_size = \
             self.data_both, self.Sn_both, self.idx_record_both, self.data, self.Sn, self.MX = \
                 self.transform_to_binaries(self.data, self.Sn, self.cat_indicator, self.MX)
 
             for v_num in self.data_both.keys():
-                #self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']] = \
-                #    Normalize(self.data_both[str(v_num)][:, self.idx_record_both[str(v_num)]['value']])
                 self.data_both[str(v_num)] = \
                     self.data_both[str(v_num)] * self.Sn_both[str(v_num)].astype('float')
-                #self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])] = \
-                #    Normalize(self.data[str(v_num)][:, np.logical_not(self.cat_indicator[str(v_num)])])
-                    
+
 
 
     @property
@@ -302,12 +286,7 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):
             X_test.append(X[v_num][test_idx])
             X_all.append(X[v_num])
 
-        '''
-        if (Normal == 1):
-            for v_num in range(view_number):
-                X_train[v_num] = Normalize(X_train[v_num])
-                X_test[v_num] = Normalize(X_test[v_num])
-        '''
+
         alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
         traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
         testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
@@ -326,13 +305,6 @@ def read_data(str_name, ratio=None, Normal=1, multi_view=True, missing_rate=0):
         for v_num in range(view_number):
             X_train.append(X[v_num][train_idx])
             X_test.append(X[v_num][test_idx])
-
-        '''
-        if (Normal == 1):
-            for v_num in range(view_number):
-                X_train[v_num] = Normalize(X_train[v_num])
-                X_test[v_num] = Normalize(X_test[v_num])
-        '''
 
         traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view)
         testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view)
@@ -403,12 +375,7 @@ def read_data_for_downstreams(str_name, imputed_str_name, ratio=None, Normal=1, 
             X_test.append(X[v_num][test_idx])
             X_all.append(X[v_num])
 
-        '''
-        if (Normal == 1):
-            for v_num in range(view_number):
-                X_train[v_num] = Normalize(X_train[v_num])
-                X_test[v_num] = Normalize(X_test[v_num])
-        '''
+
         alldata = DataSet(X_all, view_number, np.array(labels), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
         traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
         testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view=multi_view, missing_rate=missing_rate)
@@ -428,12 +395,6 @@ def read_data_for_downstreams(str_name, imputed_str_name, ratio=None, Normal=1, 
             X_train.append(X[v_num][train_idx])
             X_test.append(X[v_num][test_idx])
 
-        '''
-        if (Normal == 1):
-            for v_num in range(view_number):
-                X_train[v_num] = Normalize(X_train[v_num])
-                X_test[v_num] = Normalize(X_test[v_num])
-        '''
 
         traindata = DataSet(X_train, view_number, np.array(labels_train), cat_indicator, multi_view)
         testdata = DataSet(X_test, view_number, np.array(labels_test), cat_indicator, multi_view)

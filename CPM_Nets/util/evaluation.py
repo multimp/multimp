@@ -77,15 +77,6 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
 
     error_nume[str(i_view)] = []
     for i_view in range(int(view_num)):
-        '''
-        for ith_col in range(imputed_nume[str(i_view)].shape[1]):
-            maxv = original_nume[str(i_view)][:, ith_col][[sn_for_testing_nume[str(i_view)]]].max()
-            minv = original_nume[str(i_view)][:, ith_col][[sn_for_testing_nume[str(i_view)]]].min()
-            current_mse = ((imputed_nume[str(i_view)][:, ith_col][sn_for_testing_nume[str(i_view)][:, ith_col]] -
-                                                       original_nume[str(i_view)][:, ith_col][sn_for_testing_nume[str(i_view)][:, ith_col]])**2).sum()
-            error_nume[str(i_view)].append((current_mse**0.5)/(maxv - minv))
-        '''
-
         error_nume[str(i_view)] = \
             ((imputed_nume[str(i_view)][sn_for_testing_nume[str(i_view)]] -
              original_nume[str(i_view)][sn_for_testing_nume[str(i_view)]])**2).sum()

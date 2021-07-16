@@ -170,26 +170,3 @@ for i in range(5):
                                                       columns=['data', 'missing', 'accuracy', 'method'],
                                                       index=[0]))
             new_metrics.to_csv(metric_file, index=None)
-        '''
-        #knn_metric_file = '/playpen-raid/data/oct_yining/multimp/results/metrics/adni_mean_acc1.csv'
-        #knn_metric_file = '/playpen-raid/data/oct_yining/multimp/results/metrics/adni_mean_acc1.csv'
-        if os.path.exists(mean_metric_file):
-            metrics = pd.read_csv(mean_metric_file, header=0)
-            new_metrics = metrics.append(pd.DataFrame(current_metrics_mean,
-                                                      columns=['data', 'missing', 'accuracy', 'method'],
-                                                      index=[0]))
-            new_metrics.to_csv(mean_metric_file, index=None)
-        else:
-            pd.DataFrame.from_dict(current_metrics_mean).to_csv(mean_metric_file, index=None)
-
-        if os.path.exists(knn_metric_file):
-            metrics = pd.read_csv(knn_metric_file, header=0)
-            new_metrics = metrics.append(pd.DataFrame(current_metrics_knn,
-                                                      columns=['data', 'missing', 'accuracy', 'method'],
-                                                      index=[0]))
-            new_metrics.to_csv(knn_metric_file, index=None)
-        else:
-            pd.DataFrame.from_dict(current_metrics_mean).to_csv(knn_metric_file, index=None)
-'''
-#pd.DataFrame.from_dict(acc_knn, orient='index', columns=[0]).to_csv()
-#pd.DataFrame.from_dict(acc_mean, orient='index', columns=[0]).to_csv()

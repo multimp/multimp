@@ -1,17 +1,6 @@
-from mvlearn.datasets import load_UCImultifeature
-from mvlearn.cluster import MultiviewKMeans, MultiviewCoRegSpectralClustering
-from sklearn.manifold import TSNE
-from sklearn.metrics import normalized_mutual_info_score as nmi_score, adjusted_rand_score, accuracy_score
-import matplotlib.pyplot as plt
-import warnings
 import pickle5 as pickle
-# Load in UCI digits multiple feature dataset as an example
 from util import read_data, DataSet
 import numpy as np
-from mvlearn.datasets import sample_joint_factor_model
-from mvlearn.embed import CCA, MCCA, KMCCA, MVMDS
-from mvlearn.plotting import crossviews_plot
-from mvlearn.semi_supervised import CTClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 import os

@@ -141,17 +141,7 @@ if __name__ == "__main__":
                      allData.cat_indicator,
                      view_num)
         print('MSE is {:.4f}, MeanACC is {:.4f}'.format(mean_mse, mean_acc))
-        '''
-        mean_mse_ini, mean_acc_ini, imputed_data_ini, added_missingness_ini = \
-            evaluate(allData.data,
-                     allData.data_both,
-                     allData.Sn,
-                     allData.MX,
-                     allData.idx_record_both,
-                     allData.cat_indicator,
-                     view_num)
-        print('Initial MSE is {:.4f}, Initial MeanACC is {:.4f}'.format(mean_mse_ini, mean_acc_ini))
-        '''
+
         # save results
         root_dir = args.log_dir
         if not os.path.exists(root_dir):
