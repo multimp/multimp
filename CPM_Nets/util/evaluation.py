@@ -1,17 +1,11 @@
-import util.classfiy as classfiy
 import tensorflow as tf
 import numpy as np
-from numpy.random import shuffle
-from util.util import xavier_init
-#tf.enable_eager_execution()
-from sklearn.metrics import roc_auc_score,accuracy_score
 from sklearn.model_selection import train_test_split
 #tf.compat.v1.enable_eager_execution()
 import torch
 import pickle5 as pickle
-from util.util import read_data
 from sklearn.svm import SVC
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+
 def Normalize(data):
     """
     :param data:Input data
@@ -31,10 +25,6 @@ def transform_format(data_both, idx_record, min_label):
         if len(idx_record[i_view]['cat']) > 0:
             for i_cat in idx_record[i_view]['cat']:
                 current_cat = data_both[i_view][:, idx_record[i_view]['cat'][i_cat]]
-                #current_cat[current_cat == current_cat.max()] = 1
-                #current_cat[current_cat < current_cat.max()] = 0
-                #ohe = OneHotEncoder()
-                #current_cat = ohe.inverse_transform(current_cat)
                 current_cat = np.argmax(current_cat, axis=1) + min_label
                 data[i_view] = np.concatenate((data[i_view], current_cat[:, None]), axis=1)
     return data
@@ -84,10 +74,6 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
     error_size = []
     for i_view in range(int(view_num)):
         if cat_indicator[str(i_view)].sum() > 0:
-            #for ith_col in range(original_cat[str(i_view)].shape[1]):
-                #catv = np.unique(original_cat[str(i_view)][:, ith_col])
-                #gt = np.zeros_like(original_cat[str(i_view)][:, ith_col])
-                #gt[original_cat[str(i_view)][:, ith_col] > catv.min()] = 1
             gt = original_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
             pred = imputed_cat[str(i_view)][sn_for_testing_cat[str(i_view)]]
 
@@ -122,8 +108,6 @@ def evaluate(original, imputed, sn, original_MX, idx_record_both, cat_indicator,
 
 
     return mean_error_nume, mean_acc, sn_for_testing
-
-
 
 
 

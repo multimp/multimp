@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 
 from numpy.random import randint
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-#np.random.seed(0)
+import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 
 class DataSet(object):
